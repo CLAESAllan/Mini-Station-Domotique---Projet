@@ -10,9 +10,6 @@
 #include <DHT.h>
 #include <Adafruit_SSD1306.h>
 #include <DHT_U.h>
-#include <LITTLEFS.h>
-#include <FS.h>
-
 
 AsyncWebServer server(80);
 
