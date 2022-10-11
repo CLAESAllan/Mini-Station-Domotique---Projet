@@ -8,6 +8,9 @@
 
 #define light_sensor_pin 39
 
+#define ledRouge 20
+#define BP 12
+
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -49,7 +52,11 @@ void setup() {
   
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  
+
+  pinMode(ledRouge,OUTPUT);
+  pinMode(BP,INPUT);
+  digitalWrite(ledRouge,LOW);
+
   Serial.println("Started");
   Serial.print("Connecting");
   while (WiFi.status() != WL_CONNECTED) {
@@ -66,6 +73,9 @@ String strTemp;
 String strHum;
 String strParameter;
 String strLum;
+String strEtatBP;
+String strEtatLed;
+int etatLed;
 
 void sendData(String params) {
   
@@ -90,18 +100,28 @@ void sendData(String params) {
   // Free resources
   http.end();
 }
-void loop() {
+
+void loop() {  
+  if(digitalRead(BP)){
+      etatLed = ~etatLed;
+      digitalWrite(ledRouge,etatLed);
+  }
   //Send an HTTP POST request every delay
   if ((millis() - lastTime) > timerDelay) {
     strTemp = dht.readTemperature() ;
     strHum = dht.readHumidity();
     strLum = analogRead(light_sensor_pin) ;
+    strEtatBP = digitalRead(BP);
+    strEtatLed = etatLed;
     Serial.println(strTemp);
     Serial.println(strHum);
     Serial.println(strLum);
+    Serial.println(strEtatBP);
+    Serial.println(strEtatLed);
+
     //Check WiFi connection status
     if(WiFi.status()== WL_CONNECTED){
-      String strParameter = "temperature=" + strTemp + "&humidity=" + strHum + "&luminosity=" + strLum;
+      String strParameter = "temperature=" + strTemp + "&humidity=" + strHum + "&luminosity=" + strLum + "&etatBP" + strEtatBP + "&etatLed" + strEtatLed;
       sendData(strParameter);
     }
     else {
