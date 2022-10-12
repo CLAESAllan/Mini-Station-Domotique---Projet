@@ -14,6 +14,8 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
+int Lum;
+
 const char *ssid = "Ordi de Gilles";
 const char *password = "12345678";
 String GOOGLE_SCRIPT_ID = "AKfycbzx5iPhR_IbFFEwz8NUzR9AvscwculLY23C_vb9_HkX8q5RbjNS";
@@ -101,12 +103,15 @@ void sendData(String params) {
 
 void loop() {  
   if(digitalRead(BP)){
-      
+     digitalWrite(ledRouge,HIGH);
+    delay(100);
+    digitalWrite(ledRouge,LOW); 
       //Send an HTTP POST request every delay
   if ((millis() - lastTime) > timerDelay) {
     strTemp = dht.readTemperature() ;
     strHum = dht.readHumidity();
-    strLum = analogRead(light_sensor_pin) ;
+    Lum = analogRead(light_sensor_pin) ;
+    strLum = map(Lum, 0, 2700, 100, 0);
     Serial.println(strTemp);
     Serial.println(strHum);
     Serial.println(strLum);
@@ -120,9 +125,7 @@ void loop() {
       Serial.println("WiFi Disconnected");
     }
     lastTime = millis();
-    digitalWrite(ledRouge,HIGH);
-    delay(100);
-    digitalWrite(ledRouge,LOW);
+    
   }
   }
 }
