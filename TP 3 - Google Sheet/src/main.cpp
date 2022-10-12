@@ -103,9 +103,7 @@ void sendData(String params) {
 
 void loop() {  
   if(digitalRead(BP)){
-     digitalWrite(ledRouge,HIGH);
-    delay(100);
-    digitalWrite(ledRouge,LOW); 
+     
       //Send an HTTP POST request every delay
   if ((millis() - lastTime) > timerDelay) {
     strTemp = dht.readTemperature() ;
@@ -120,12 +118,17 @@ void loop() {
     if(WiFi.status()== WL_CONNECTED){
       String strParameter = "temperature=" + strTemp + "&humidity=" + strHum + "&luminosity=" + strLum;
       sendData(strParameter);
+      digitalWrite(ledRouge,HIGH);
+      delay(100);
+      digitalWrite(ledRouge,LOW); 
     }
     else {
       Serial.println("WiFi Disconnected");
     }
     lastTime = millis();
     
-  }
+    }
   }
 }
+
+
