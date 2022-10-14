@@ -1,3 +1,14 @@
+function buttonON() {
+    var bpON = new XMLHttpRequest();
+    bpON.open("GET", "/update?state=1", true);
+    bpON.send();
+  }
+  function buttonOFF() {
+    var bpOFF = new XMLHttpRequest();
+    bpOFF.open("GET", "/update?state=0", true);
+    bpOFF.send();
+  }
+
 setInterval(function ( ) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
@@ -8,16 +19,6 @@ setInterval(function ( ) {
     xhttp.open("GET", "/temperature", true);
     xhttp.send();
   }, 1000 ) ;
-  function buttonON() {
-    var bpON = new XMLHttpRequest();
-    bpON.open("GET", "/update?state=1", true);
-    bpON.send();
-  }
-  function buttonOFF() {
-    var bpOFF = new XMLHttpRequest();
-    bpOFF.open("GET", "/update?state=0", true);
-    bpOFF.send();
-  }
 
   setInterval(function ( ) {
     var xhttps = new XMLHttpRequest();
