@@ -7,15 +7,36 @@ setInterval(function ( ) {
     };
     xhttp.open("GET", "/temperature", true);
     xhttp.send();
-  }, 10000 ) ;
-  
+  }, 1000 ) ;
+  function buttonON() {
+    var bpON = new XMLHttpRequest();
+    bpON.open("GET", "/update?state=1", true);
+    bpON.send();
+  }
+  function buttonOFF() {
+    var bpOFF = new XMLHttpRequest();
+    bpOFF.open("GET", "/update?state=0", true);
+    bpOFF.send();
+  }
+
   setInterval(function ( ) {
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
+    var xhttps = new XMLHttpRequest();
+    xhttps.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
-        document.getElementById("humidity").innerHTML = this.responseText;
+        var inputChecked;
+        var outputStateM;
+        if( this.responseText == 1){ 
+          inputChecked = true;
+          outputStateM = "On";
+        }
+        else { 
+          inputChecked = false;
+          outputStateM = "Off";
+        }
+        document.getElementById("output").checked = inputChecked;
+        document.getElementById("outputState").innerHTML = outputStateM;
       }
     };
-    xhttp.open("GET", "/humidity", true);
-    xhttp.send();
-  }, 10000 ) ;
+    xhttps.open("GET", "/state", true);
+    xhttps.send();
+  }, 1000 ) ;
