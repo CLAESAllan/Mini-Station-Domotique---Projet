@@ -14,6 +14,7 @@
 #define LDR 39
 #define RGB 0
 #define Bouton 12
+#define pot 33
 DHT dht(DHTPIN, DHTTYPE);
 int Luminosite;
 int Rouge = 0, Vert = 0, Bleu = 0;
@@ -38,15 +39,15 @@ AdafruitIO_Feed *temperature = io.feed("Temperature");
 AdafruitIO_Feed *humidity = io.feed("Humidite");
 AdafruitIO_Feed *luminosity = io.feed("Luminosite");
 AdafruitIO_Feed *textBox = io.feed("Etat BP");
-AdafruitIO_Feed *sliderRed = io.feed("SliderRed");
-AdafruitIO_Feed *sliderGreen = io.feed("Slider Vert");
-AdafruitIO_Feed *sliderBlue = io.feed("Slider Bleu");
+AdafruitIO_Feed *sliderRed = io.feed("Rouge");
+AdafruitIO_Feed *sliderGreen = io.feed("Vert");
+AdafruitIO_Feed *sliderBlue = io.feed("Bleu");
 
 // How many NeoPixels are attached to the Arduino?
 #define LED_COUNT  1
 
 // NeoPixel brightness, 0 (min) to 255 (max)
-#define BRIGHTNESS 25 // Set BRIGHTNESS to about 1/5 (max = 255)
+#define BRIGHTNESS 10 // Set BRIGHTNESS to about 1/5 (max = 255)
 
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, RGB, NEO_GRB + NEO_KHZ800);
@@ -57,15 +58,12 @@ void handleMessageLED(AdafruitIO_Data *data){
   }
   else{
   }
-  Serial.println("FLAG BP");
-  Serial.println(data->toPinLevel());
   digitalWrite(LED, data->toPinLevel());      //Write the current state to the led
 }
 
 //Creating the red colour function of the RGB LED
 void handleMessageRed(AdafruitIO_Data *data){
   readingR = data->toInt();                //Convert the data to integer
-
 }
 
 //Creating the bluecolour function of the RGB LED
@@ -84,6 +82,9 @@ void handleMessageGreen(AdafruitIO_Data *data){
 void setup() {
 
   pinMode(LED, OUTPUT);       //Defines LED as output
+  pinMode(pot, INPUT);       //Defines LED as output
+
+  strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
 
   Serial.begin(115200);       //Definition of the data rate
 
@@ -130,17 +131,21 @@ void loop() {
   EtatBouton = digitalRead(Bouton);     //Read button value
   
   //Grab the state of the "EtatBouton" button
-  if ( EtatBouton == LOW){              //If the state is low then we send an "OFF"
-    textBox->save("OFF");
+  if ( EtatBouton == HIGH){              //If the state is low then we send an "OFF"
+    textBox->save("ON");
+    temperature->save(t);                 //Save the value of t in the temperature Feed on adafruitIO
+    humidity->save(h);                    //Save the value of h in the humidity feed on adafruitIO
+    luminosity->save(Luminosite);         //Save the value of Luminosity in the luminosity on adafruitIO
   }
   else{                                 //Otherwise an "ON
-    textBox->save("ON");
+    
+    textBox->save("OFF");
   }
-  
-  //temperature->save(t);                 //Save the value of t in the temperature Feed on adafruitIO
-  //humidity->save(h);                    //Save the value of h in the humidity feed on adafruitIO
-  //luminosity->save(Luminosite);         //Save the value of Luminosity in the luminosity on adafruitIO
-  strip.fill(strip.Color(readingR, readingV, readingB, BRIGHTNESS));
+
+  int valPort = analogRead(pot);
+  int eclairage = map(valPort, 0, 4095, 0, 255);
+  strip.setBrightness(eclairage);
+  strip.fill(strip.Color(readingR, readingV, readingB,eclairage ));
   strip.show();
-  delay(5000);
+  delay(3000);
 }
