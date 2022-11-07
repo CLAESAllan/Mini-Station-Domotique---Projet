@@ -26,7 +26,7 @@ void button_task(void *argp){
  vTaskDelay(10);
  }
 }
-void led1_task(void*argp){
+void tache_LED1(void*argp){
  BaseType_t rc;
  for (;;){
     rc= xSemaphoreTake(hsem,portMAX_DELAY);
@@ -41,7 +41,7 @@ void led1_task(void*argp){
  assert(rc == pdPASS);
  }
 }
-void led2_task(void*argp){
+void tache_LED2(void*argp){
  BaseType_t rc;
  for (;;){
  rc= xSemaphoreTake(hsem,portMAX_DELAY);
@@ -64,13 +64,13 @@ void setup(){
  digitalWrite(LED2_GPIO,LOW);
  pinMode(BUTTON_GPIO, INPUT);
 
- int app_cpu = xPortGetCoreID(); // Recupere ID du core
- BaseType_t rc; // Return code
+ int app_cpu = xPortGetCoreID(); 
+ BaseType_t rc; 
  hsem = xSemaphoreCreateBinary();
  assert(hsem);
- rc = xTaskCreatePinnedToCore(led1_task, "led1task", 3000, NULL, 1,nullptr, app_cpu);
- assert(rc == pdPASS);// Allow led1task to start first
- rc= xTaskCreatePinnedToCore(led2_task, "led2task", 3000, NULL, 1, nullptr, app_cpu); 
+ rc = xTaskCreatePinnedToCore(tache_LED1, "led1task", 3000, NULL, 1,nullptr, app_cpu);
+ assert(rc == pdPASS);
+ rc= xTaskCreatePinnedToCore(tache_LED2, "led2task", 3000, NULL, 1, nullptr, app_cpu); 
  xTaskCreatePinnedToCore(button_task,"buttontask",3000, NULL,1, nullptr,app_cpu);
  assert(rc == pdPASS);
  }
