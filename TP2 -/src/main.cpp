@@ -15,8 +15,8 @@
 
 AsyncWebServer server(80);
 
-const char *ssid = "DESKTOP-JFITQ99";
-const char *password = "n9C2247|";
+const char *ssid = "Ordi de Gilles";
+const char *password = "12345678";
 const char* PARAM_INPUT_1 = "state";
 
 #define DHTPIN 26     // Digital pin connected to the DHT sensor
