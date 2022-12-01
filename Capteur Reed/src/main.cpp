@@ -1,6 +1,6 @@
 #include <Arduino.h>
 // for Arduino microcontroller
-int digitalPin = 19;
+int digitalPin = 2;
 int NombrePassage = 0;
 // for ESP8266 microcontroller
 //int ledPin = D7; 

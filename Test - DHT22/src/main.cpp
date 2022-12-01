@@ -6,7 +6,7 @@
 #include "DHT.h"
 #include "DHT_U.h"
 
-#define DHTPIN 26     // Digital pin connected to the DHT sensor
+#define DHTPIN 4     // Digital pin connected to the DHT sensor
 // Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
 // Pin 15 can work but DHT must be disconnected during program upload.
 

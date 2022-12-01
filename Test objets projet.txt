@@ -1,0 +1,15 @@
+Servo moteur - ESP32 - OK
+Servo moteur - Mini32 - OK
+Servo moteur - PCB - OK (pin 13)
+
+Reed - ESP32 - OK
+Reed - Mini32 - OK
+Reed - PCB - OK (pin 19)
+
+DHT22 - ESP32 - OK
+DHT22 - Mini32 - OK
+DHT22 - PCB - OK (pin 4)
+
+Buzzer - ESP32 - 
+Buzzer - Mini32 - 
+Buzzer - PCB - 
