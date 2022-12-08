@@ -1,6 +1,6 @@
 Servo moteur - ESP32 - OK
 Servo moteur - Mini32 - OK
-Servo moteur - PCB - OK (pin 13)
+Servo moteur - PCB - OK (pin 13) (GND -> Brun)
 
 Reed - ESP32 - OK
 Reed - Mini32 - OK
