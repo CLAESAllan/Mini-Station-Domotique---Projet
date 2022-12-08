@@ -16,5 +16,5 @@ while(boucleBuzz < 4000 ){
       tone(BUZZZER_PIN, boucleBuzz,125);
       boucleBuzz +=500;
       }  
-    boucleBuzz = 100;  
+    boucleBuzz = 1000;  
 }
