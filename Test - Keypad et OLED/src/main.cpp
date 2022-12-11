@@ -53,21 +53,30 @@ void setup() {
 }
 
 void loop() {
-
   char key = keypad.getKey();
   chiffre_valid = false;
   int tailleTableau = sizeof(codeIntroduit);
 
-  for (int w = 0; w < tailleTableau;w++){
-    if(codeIntroduit[tailleTableau - 3] = '3' && codeIntroduit[tailleTableau - 2] = '6' && codeIntroduit[tailleTableau - 1] = '1' && codeIntroduit[tailleTableau] = '0'){
-
+if (key == '#' ){
+  Serial.println(key);
+    for (int w = 0; w < tailleTableau;w++){
+      Serial.println("flag for");
+      if(codeIntroduit[tailleTableau - 3] == '3' && codeIntroduit[tailleTableau - 2] == '6' && codeIntroduit[tailleTableau - 1] == '1' && codeIntroduit[tailleTableau] == '0'){
+        display.clearDisplay();
+        display.setTextSize(2);
+        display.setCursor(30, 8);
+        display.println("Code correct");
+        display.display();
     }
-  }
-
-  for (int x = 0; x < 10; x++){
-    if (key == chiffres[x]){
-     chiffre_valid = true;
-     break;
+    else{
+        Serial.println("flag else");
+        display.clearDisplay();
+        display.setTextSize(2);
+        display.setCursor(30, 8);
+        display.println("Code incorrect");
+        display.display();
+        break;
+    }
   }
 }
 
@@ -81,20 +90,26 @@ void loop() {
     codeROW = 33;
   }
 
-  if (chiffre_valid && (numberOfEntry <= 3)) {
+for (int x = 0; x < 10; x++){
+    if (key == chiffres[x]){
+     chiffre_valid = true;
+     break;
+  }
+}
+
+  if (key && chiffre_valid && (numberOfEntry <= 3)) {
     codeIntroduit[numberOfEntry] = key;
-    Serial.print(key); // prints key to serial monitor
     display.setTextSize(2);
     display.setCursor(codeROW, 25);
     display.println(key);
 
     display.setCursor(codeROW, 45);
-    Serial.println(codeIntroduit);
 
     display.display();
     codeROW += 12;
     numberOfEntry +=1;
-
-
+    Serial.println(key); // prints key to serial monitor
+    Serial.println(numberOfEntry);
   }
 }
+  
