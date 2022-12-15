@@ -1,25 +1,27 @@
+//Library
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
 
+//Pins used
 #define DHTPIN 26
 #define DHTTYPE DHT11
-
 #define light_sensor_pin 39
-
 #define ledRouge 32
 #define BP 12
 
-
-DHT dht(DHTPIN, DHTTYPE);
+DHT dht(DHTPIN, DHTTYPE); //Declaration of the type of DHT used
 
 int Lum;
 
+//Allows you to connect to the wifi point
 const char *ssid = "Ordi de Gilles";
 const char *password = "12345678";
-String GOOGLE_SCRIPT_ID = "AKfycbzx5iPhR_IbFFEwz8NUzR9AvscwculLY23C_vb9_HkX8q5RbjNS";
 
+String GOOGLE_SCRIPT_ID = "AKfycbzx5iPhR_IbFFEwz8NUzR9AvscwculLY23C_vb9_HkX8q5RbjNS"; //Connect to the Google Sheets page
+
+//Certificate to access the google Sheets page. Without this certificate, no communication will be made.
 const char * root_ca=\
 "-----BEGIN CERTIFICATE-----\n" \
 "MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG\n" \
@@ -44,47 +46,54 @@ const char * root_ca=\
 "-----END CERTIFICATE-----\n";
 
 
-WiFiClientSecure client;
+WiFiClientSecure client; //Client type use for WiFi communication
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200); //Baud Rate
   delay(10);
 
   dht.begin();
   
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.mode(WIFI_STA); //ESP32 connects to an access point
+  WiFi.begin(ssid, password); //Initializes the network settings of the and provides the current status.
 
+  //Defines inputs / outputs
   pinMode(ledRouge,OUTPUT);
   pinMode(BP,INPUT);
 
   Serial.println("Started");
   Serial.print("Connecting");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  while (WiFi.status() != WL_CONNECTED) { //Returns the connection status
+    delay(500);                           //WL_CONNECTED : assigned when connected to a WiFi network
+    Serial.print("."); //Print (".") as long as it is not connected
   }
   randomSeed(analogRead(0));
   Serial.println("TP3 GoogleSheets ready...");
 }
 
-unsigned long lastTime = 0;
-unsigned long timerDelay = 10000;
+unsigned long lastTime = 0; //We use long because the time (in ms) will quickly become a larger number than can be stored in an int.
+unsigned long timerDelay = 10000; // interval at which data is sent(ms)
+
+//Variables used for the frame
 String strTemp;
 String strHum;
 String strParameter;
 String strLum;
 String strEtatBP;
 String strEtatLed;
+
 int etatLed;
 
+//Allows you to connect and return errors when connecting to the Google Sheets page
 void sendData(String params) {
   HTTPClient http;
   String url="https://script.google.com/macros/s/"+GOOGLE_SCRIPT_ID+"/exec?"+params;
   Serial.println(url);
   Serial.println("Making a request");
+  
   // Your Domain name with URL path or IP address with path
   http.begin(url, root_ca); //Specify the URL and certificate
+  
   // Send HTTP GET request
   int httpCode = http.GET();
   if (httpCode > 0) {
@@ -102,30 +111,29 @@ void sendData(String params) {
 }
 
 void loop() {  
-  if(digitalRead(BP)){
-     
-      //Send an HTTP POST request every delay
-  if ((millis() - lastTime) > timerDelay) {
-    strTemp = dht.readTemperature() ;
-    strHum = dht.readHumidity();
-    Lum = analogRead(light_sensor_pin) ;
-    strLum = map(Lum, 0, 2700, 100, 0);
-    Serial.println(strTemp);
-    Serial.println(strHum);
-    Serial.println(strLum);
+  if(digitalRead(BP)){ 
+    //Send an HTTP POST request every delay
+    if ((millis() - lastTime) > timerDelay) {
+      strTemp = dht.readTemperature() ;
+      strHum = dht.readHumidity();
+      Lum = analogRead(light_sensor_pin) ;
+      strLum = map(Lum, 0, 2700, 100, 0);
+      Serial.println(strTemp);
+      Serial.println(strHum);
+      Serial.println(strLum);
 
-    //Check WiFi connection status
-    if(WiFi.status()== WL_CONNECTED){
-      String strParameter = "temperature=" + strTemp + "&humidity=" + strHum + "&luminosity=" + strLum;
-      sendData(strParameter);
-      digitalWrite(ledRouge,HIGH);
-      delay(100);
-      digitalWrite(ledRouge,LOW); 
-    }
-    else {
-      Serial.println("WiFi Disconnected");
-    }
-    lastTime = millis();
+      //Check WiFi connection status
+      if(WiFi.status()== WL_CONNECTED){
+        String strParameter = "temperature=" + strTemp + "&humidity=" + strHum + "&luminosity=" + strLum;
+        sendData(strParameter);
+        digitalWrite(ledRouge,HIGH);
+        delay(100);
+        digitalWrite(ledRouge,LOW); 
+      }
+      else {
+        Serial.println("WiFi Disconnected");
+      }
+      lastTime = millis();
     
     }
   }

@@ -1,3 +1,4 @@
+//Library
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
@@ -7,21 +8,21 @@
 #include <analogWrite.h>
 #include <Adafruit_NeoPixel.h>
 
+//Definition of variables
+#define DHTPin 26
 #define DHTTYPE DHT11
+#define BP 12
+#define RGB 0
+#define LED 32
 
 const char* ssid = "Ordi de Gilles";
 const char* password = "12345678";
 
 const char* mqtt_server = "192.168.137.1";  //192.168.137.1   172.18.0.3
 
+//Initializes the espClient.
 WiFiClient espClient;
 PubSubClient client(espClient);
-
-#define DHTPin 26
-#define BP 12
-#define RGB 0
-#define LED 32
-
 
 char button[6]; // trame for data to be send
 
@@ -29,9 +30,9 @@ bool etatLED = LOW; // the current state of LED
 int etatBP; // the current state of button
 int dernierEtatBP;// the previous state of button
 
-int valeurR;
-int valeurG;
-int valeurB;
+int valeurR; // Variable to stock value Red reveived
+int valeurG; // Variable to stock value Green reveived
+int valeurB; // Variable to stock value Blue reveived
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(1, RGB, NEO_GRB + NEO_KHZ800);
 #define BRIGHTNESS 50 // Set BRIGHTNESS to about 1/5 (max = 255)
@@ -43,6 +44,7 @@ long now = millis();
 long lastMeasure = 0;
 String clientId = "Hello";
 
+//This functions connects your ESP32 to your router
 void setup_wifi() {
  delay(10);
  // We start by connecting to a WiFi network
@@ -59,6 +61,11 @@ void setup_wifi() {
  Serial.println(WiFi.localIP());
 }
 
+/*This functions is executed when some device publishes a message to a topic that your ESP32 is subscribed to 
+ *Change the function below to add logic to your program, 
+ *so when a device publishes a message to a topic that 
+ *your ESP32 is subscribed you can actually do something
+ */
 void callback(String topic, byte* message, unsigned int length) {
  Serial.print("Message arrived on topic: ");
  Serial.print(topic);
@@ -71,6 +78,10 @@ void callback(String topic, byte* message, unsigned int length) {
  }
  Serial.println();
  
+ /* If a message is received on the topic LED,
+ * you check if the message is either on or off.
+ * Turns the LED GPIO according to the message
+ */
  if(topic=="LED"){
   Serial.print("Changing Room lamp to ");
  if(messageTemp == "on"){
@@ -83,16 +94,30 @@ void callback(String topic, byte* message, unsigned int length) {
  }
 }
 
+/*If a message is received on the topic valeurR
+ * write the values to GPIO according to the message
+ * it is for the control of lED RGB (color Red)
+ */
  if(topic=="valeurR")
  {
  valeurR = messageTemp.toInt();
   Serial.println(valeurR);
  }
+
+ /*If a message is received on the topic valeurG
+ * write the values to GPIO according to the message
+ * it is for the control of lED RGB (color Green)
+ */
  if(topic=="valeurG")
  {
  valeurG = messageTemp.toInt();
   Serial.println(valeurG);
  }
+
+ /*If a message is received on the topic valeurB
+ * write the values to GPIO according to the message
+ * it is for the control of lED RGB (color Blue)
+ */
  if(topic=="valeurB")
  {
  valeurB = messageTemp.toInt();
@@ -101,33 +126,23 @@ void callback(String topic, byte* message, unsigned int length) {
  Serial.println();
 }
 
+/* This functions reconnects your ESP32
+* to your MQTT broker */
 void reconnect() {
  // Loop until we're reconnected
  while (!client.connected()) {
  Serial.print("Attempting MQTT connection...");
  // Attempt to connect
- /*
- YOU MIGHT NEED TO CHANGE THIS LINE,
- IF YOU'RE HAVING PROBLEMS WITH MQTT MULTIPLE CONNECTIONS
- To change the ESP device ID,
- you will have to give a new name to the ESP32.
- Here's how it looks:
- if (client.connect("ESP32Client")) {
-  You can do it like this:
- if (client.connect("ESP1_Office")) {
- Then, for the other ESP:
- if (client.connect("ESP2_Garage")) {
- That should solve your MQTT multiple connections problem
- */
+ 
  if (client.connect(clientId.c_str(),"","095f3cdd2282")) {
  Serial.println("connected");
  
  client.subscribe("LED");
- //subscribe to topic room_R
+ //subscribe to topic valeurR
  client.subscribe("valeurR");
- //subscribe to topic room_G
+ //subscribe to topic valeurG
  client.subscribe("valeurG");
- //subscribe to topic room_B
+ //subscribe to topic valeurB
  client.subscribe("valeurB");
  client.subscribe("JSON");
  } else {
@@ -140,23 +155,23 @@ void reconnect() {
  }
 }
 
-
 void setup() {
  // Initialize pins used
- strip.begin();
-  strip.setBrightness(50);
-  strip.show(); // Initialize all pixels to 'off'
  pinMode(LED, OUTPUT);
  pinMode(BP, INPUT);
-
+  
+ strip.begin();
+ strip.setBrightness(50);
+ strip.show(); // Initialize all pixels to 'off'
+ 
  dht.begin();// start module DHT11
+
  Serial.begin(115200);// initialize serial monitor
  setup_wifi();//
  // set server mqtt on port 1883 to the client
  client.setServer(mqtt_server, 1883);
  // set the function callback to the client
  client.setCallback(callback);
-
 }
 
 void loop() {
@@ -170,43 +185,44 @@ if(!client.loop())
 strip.fill(strip.Color(valeurR, valeurG, valeurB, BRIGHTNESS));
 strip.show();
 
+//Toggle Button
  etatBP = digitalRead(BP);// read new state
  if (dernierEtatBP == HIGH && etatBP == LOW) {
   etatLED = !etatLED;
+  //Control LED arccoding to the toggled state
   digitalWrite(LED, etatLED);
+  //Convert to a data that could be send
   snprintf(button, 6, "%u", etatLED);
+  //Send to the topic BP 
   client.publish("BP", button);
  }
  dernierEtatBP = etatBP;// Update state toggle
  delay(50);
 
-
-
+//Publishes new temperature and humidity every 3 seconds
  if (now - lastMeasure > 3000) {
  lastMeasure = now;
  
- float h = dht.readHumidity();
+ float h = dht.readHumidity(); // Read temperature as Celsius
  float t = dht.readTemperature();
  static char tCHAR[3];
  dtostrf(t,3,1,tCHAR);
 
+  //Check if any reads failed and exit early (to try again).
  if (isnan(h) || isnan(t)) {
  Serial.println("Failed to read from DHT sensor!");
  return;
  }
 
+//Computes temperature values in Celsius
  float hic = dht.computeHeatIndex(t, h, false);
  static char temperatureTemp[7];
  dtostrf(hic, 6, 2, temperatureTemp);
 
- // Uncomment to compute temperature values in Fahrenheit
- // float hif = dht.computeHeatIndex(f, h);
- // static char temperatureTemp[7];
- // dtostrf(hif, 6, 2, temperatureTemp);
-
  static char humidityTemp[7];
  dtostrf(h, 6, 2, humidityTemp);
  
+ //Publishes Temperature and Humidity values
  client.publish("temperature", temperatureTemp);
  client.publish("humidite", humidityTemp);
 
@@ -220,7 +236,6 @@ strip.show();
   doc["etatBP"] = button;
 
   // Generate the minified JSON and send it to the Serial port.
-  //
   serializeJson(doc, Serial);
   static char jsonCHAR [100];
   serializeJson(doc, jsonCHAR);
@@ -230,7 +245,6 @@ strip.show();
   Serial.println();
 
   // Generate the prettified JSON and send it to the Serial port.
-  //
   serializeJsonPretty(doc, Serial);
   }
 }
