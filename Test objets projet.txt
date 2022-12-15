@@ -13,3 +13,7 @@ DHT22 - PCB - OK (pin 4)
 Buzzer - ESP32 - 
 Buzzer - Mini32 - 
 Buzzer - PCB - 
+
+
+MAC adress	Telecomande : C8:C9:A3:D2:9E:88
+			Station : C0:49:EF:D1:50:40
