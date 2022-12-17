@@ -1,4 +1,4 @@
-//Library
+//Libraries
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <DHT.h>
@@ -49,10 +49,10 @@ const char * root_ca=\
 WiFiClientSecure client; //Client type use for WiFi communication
 
 void setup() {
-  Serial.begin(115200); //Baud Rate
+  Serial.begin(115200); //Setup the monitor serial
   delay(10);
 
-  dht.begin();
+  dht.begin(); //Initialize the module DHT11
   
   WiFi.mode(WIFI_STA); //ESP32 connects to an access point
   WiFi.begin(ssid, password); //Initializes the network settings of the and provides the current status.
@@ -138,5 +138,3 @@ void loop() {
     }
   }
 }
-
-

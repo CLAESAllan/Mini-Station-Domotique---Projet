@@ -1,16 +1,17 @@
+//Libraries
 #include <Arduino.h>
 #if defined(ESP32)
-  #include <WiFi.h>
+#include <WiFi.h>
 #elif defined(ESP8266)
-  #include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h>
 #endif
 #include <Firebase_ESP_Client.h>
 #include <Firebase.h>
 #include <DHT_U.h>
 #include <DHT.h>
 #include <Adafruit_SSD1306.h>
-#include <addons/TokenHelper.h>
-#include <addons/RTDBHelper.h>
+#include <addons/TokenHelper.h> //Provide the token generation process info.
+#include <addons/RTDBHelper.h> //Provide the RTDB payload printing info and other helper functions.
 
 // Insert your network credentials
 #define WIFI_SSID "Ordi de Gilles"
@@ -22,25 +23,26 @@
 // Insert RTDB URLefine the RTDB URL */
 #define DATABASE_URL "https://tp8---firebase-default-rtdb.europe-west1.firebasedatabase.app/" 
 
+//Definitions of variables
+#define LED1 32
+#define LED2 5
+#define BP 12
 #define DHTPIN 26
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
-#define LED1 32
-#define LED2 5
-#define BP 12
-
 //Define Firebase Data object
-FirebaseData fbdo;
+FirebaseData fbdo; //Firebase Realtime Database Object
 FirebaseData stream;
 
-FirebaseAuth auth;
-FirebaseConfig config;
+FirebaseAuth auth; //Firebase Authentication Object
+FirebaseConfig config; //Firebase configuration Object
 
 unsigned long sendDataPrevMillis = 0;
 int count = 0;
 bool signupOK = false;
 volatile bool dataChanged = false;
+
 
 void streamCallback(FirebaseStream data){
   Serial.printf("sream path, %s\nevent path, %s\ndata type, %s\nevent type, %s\n\n",
@@ -64,13 +66,18 @@ void streamTimeoutCallback(bool timeout){
 }
 
 void setup(){
-  Serial.begin(115200);
-  dht.begin();
+  Serial.begin(115200); //Initialise serial communication 
+  dht.begin(); //Initialize module DHT11
+
+  // Initialize pins used
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
   pinMode(BP, INPUT);
+
+  //Define the WiFi credentials
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to Wi-Fi");
+
   while (WiFi.status() != WL_CONNECTED){
     Serial.print(".");
     delay(300);
@@ -112,26 +119,19 @@ if (!Firebase.RTDB.beginStream(&stream, "/test/stream/data"))
 
 void loop(){
 
-  //delay(500);
+  float h = dht.readHumidity(); //Read Humidity
+  float t = dht.readTemperature(); //Read temperature
 
-  float h = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  float t = dht.readTemperature();
   if (isnan(h) || isnan(t)) {
-    //Serial.println(F("Failed to read from DHT sensor!"));
     return;
   }
-  //Serial.print(F("Humidity: "));
-  //Serial.print(h);
-  //Serial.print(F("%  Temperature: "));
-  //Serial.print(t);
-  //Serial.print(F("°C "));
+  
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0)){
     sendDataPrevMillis = millis();
+    //Write an Int number on the database path test/int
     if (Firebase.RTDB.getInt(&fbdo, "/LED 1")){
       if (fbdo.dataType() == "int"){
        int EtatLED1 = fbdo.intData();
-       //Serial.println(EtatLED1);
        digitalWrite(LED1, EtatLED1);
       }
       
@@ -140,11 +140,10 @@ void loop(){
       Serial.println("REASON: " + fbdo.errorReason());
     }
     
-    // Write an Float number on the database path test/float
+    //Write an Int number on the database path test/int
     if (Firebase.RTDB.getInt(&fbdo, "/LED 2")){
       if (fbdo.dataType() == "int"){
        int EtatLED2 = fbdo.intData();
-       //Serial.println(EtatLED2);
        digitalWrite(LED2, EtatLED2);
       }
     }
@@ -155,9 +154,7 @@ void loop(){
 
   bool EtatBP = digitalRead(BP);
   if (Firebase.RTDB.setBool(&fbdo, "/Etat BP", EtatBP)){
-    //Serial.println("PASSED");
-    //Serial.println("PATH: " + fbdo.dataPath());
-    //Serial.println("TYPE: " + fbdo.dataType());
+
   }
   else {
     Serial.println("FAILED");

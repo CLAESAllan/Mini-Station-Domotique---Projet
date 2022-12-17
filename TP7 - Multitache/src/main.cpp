@@ -6,7 +6,6 @@
 #define LED2_GPIO 26
 #define BUTTON_GPIO 27
 
-
 static SemaphoreHandle_t hsem; //Waits parameter to be read
 
 //Variables used
@@ -108,8 +107,7 @@ void setup(){
  assert(rc == pdPASS);
  }
 // Not used
-void loop()
-{
+void loop(){
 vTaskDelete(nullptr);
 //Supprimer une tâche de la gestion des noyaux RTOS.
 }
