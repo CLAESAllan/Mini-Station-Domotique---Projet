@@ -5,19 +5,21 @@
 #include <PubSubClient.h>
 #include <DHT.h>
 #include <DHT_U.h>
-#include <analogWrite.h>
+//#include <analogWrite.h>
 #include <Adafruit_NeoPixel.h>
 
 //Definition of variables
 #define DHTPin 26
-#define DHTTYPE DHT11
+#define DHTTYPE DHT11 //type of sensor
 #define BP 12
 #define RGB 0
 #define LED 32
 
+//Change the credentials below, so your ESP32 connects to your router
 const char* ssid = "Ordi de Gilles";
 const char* password = "12345678";
 
+//Connect to your MQTT broker
 const char* mqtt_server = "192.168.137.1";  //192.168.137.1   172.18.0.3
 
 //Initializes the espClient.
@@ -61,10 +63,10 @@ void setup_wifi() {
  Serial.println(WiFi.localIP());
 }
 
-/*This functions is executed when some device publishes a message to a topic that your ESP32 is subscribed to 
- *Change the function below to add logic to your program, 
- *so when a device publishes a message to a topic that 
- *your ESP32 is subscribed you can actually do something
+/*This function is performed when a device sends 
+ *a message to a subject to which your ESP32 is subscribed.
+ *Let's modify the function below to add program logic, 
+ *so that when the device posts to a topic that your ESP32 is subscribed to.
  */
 void callback(String topic, byte* message, unsigned int length) {
  Serial.print("Message arrived on topic: ");
@@ -78,9 +80,9 @@ void callback(String topic, byte* message, unsigned int length) {
  }
  Serial.println();
  
- /* If a message is received on the topic LED,
- * you check if the message is either on or off.
- * Turns the LED GPIO according to the message
+ /* If a message is received on the room/lamp topic, 
+  *check if the message is on or off.
+  *You activate the GPIO of the lamp according to the message.
  */
  if(topic=="LED"){
   Serial.print("Changing Room lamp to ");
@@ -94,9 +96,9 @@ void callback(String topic, byte* message, unsigned int length) {
  }
 }
 
-/*If a message is received on the topic valeurR
- * write the values to GPIO according to the message
- * it is for the control of lED RGB (color Red)
+ /*If a message is received on the subject valeurR 
+ *the values to the GPIO according to the message 
+ *is for the control of the lED RGB (color Red)
  */
  if(topic=="valeurR")
  {
@@ -104,9 +106,9 @@ void callback(String topic, byte* message, unsigned int length) {
   Serial.println(valeurR);
  }
 
- /*If a message is received on the topic valeurG
- * write the values to GPIO according to the message
- * it is for the control of lED RGB (color Green)
+ /*If a message is received on the subject valeurG 
+ *the values to the GPIO according to the message 
+ *is for the control of the lED RGB (color Green)
  */
  if(topic=="valeurG")
  {
@@ -114,9 +116,9 @@ void callback(String topic, byte* message, unsigned int length) {
   Serial.println(valeurG);
  }
 
- /*If a message is received on the topic valeurB
- * write the values to GPIO according to the message
- * it is for the control of lED RGB (color Blue)
+ /*If a message is received on the subject valeurB 
+ *the values to the GPIO according to the message 
+ *is for the control of the lED RGB (color Blue)
  */
  if(topic=="valeurB")
  {
@@ -137,6 +139,7 @@ void reconnect() {
  if (client.connect(clientId.c_str(),"","095f3cdd2282")) {
  Serial.println("connected");
  
+ //subscribe to topic LED
  client.subscribe("LED");
  //subscribe to topic valeurR
  client.subscribe("valeurR");
@@ -144,6 +147,7 @@ void reconnect() {
  client.subscribe("valeurG");
  //subscribe to topic valeurB
  client.subscribe("valeurB");
+ //subscribe to topic JSON
  client.subscribe("JSON");
  } else {
  Serial.print("failed, rc=");
@@ -164,7 +168,7 @@ void setup() {
  strip.setBrightness(50);
  strip.show(); // Initialize all pixels to 'off'
  
- dht.begin();// start module DHT11
+ dht.begin();//  module DHT11
 
  Serial.begin(115200);// initialize serial monitor
  setup_wifi();//
@@ -203,10 +207,10 @@ strip.show();
  if (now - lastMeasure > 3000) {
  lastMeasure = now;
  
- float h = dht.readHumidity(); // Read temperature as Celsius
- float t = dht.readTemperature();
+ float h = dht.readHumidity(); // Read humidity in %
+ float t = dht.readTemperature(); //Read temperature as Celsius
  static char tCHAR[3];
- dtostrf(t,3,1,tCHAR);
+ dtostrf(t,3,1,tCHAR); //Function dtostrf converts double and floating-point values into a string.
 
   //Check if any reads failed and exit early (to try again).
  if (isnan(h) || isnan(t)) {
@@ -217,20 +221,22 @@ strip.show();
 //Computes temperature values in Celsius
  float hic = dht.computeHeatIndex(t, h, false);
  static char temperatureTemp[7];
- dtostrf(hic, 6, 2, temperatureTemp);
+ dtostrf(hic, 6, 2, temperatureTemp); //Function dtostrf converts double and floating-point values into a string.
 
  static char humidityTemp[7];
- dtostrf(h, 6, 2, humidityTemp);
+ dtostrf(h, 6, 2, humidityTemp); //Function dtostrf converts double and floating-point values into a string.
  
  //Publishes Temperature and Humidity values
  client.publish("temperature", temperatureTemp);
  client.publish("humidite", humidityTemp);
 
  Serial.print("Humidity: ");
-  Serial.print(h);
+ Serial.print(h);
  Serial.print(" %\t Temperature: ");
  Serial.print(t);
  Serial.print(" *C ");
+
+  //we could then access the data inside it using the same dot/bracket
   doc["temperature"] = tCHAR;
   doc["humidite"] = h;
   doc["etatBP"] = button;
