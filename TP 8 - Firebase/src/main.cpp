@@ -35,8 +35,8 @@ DHT dht(DHTPIN, DHTTYPE);
 FirebaseData fbdo; //Firebase Realtime Database Object
 FirebaseData stream;
 
-FirebaseAuth auth; //Firebase Authentication Object
-FirebaseConfig config; //Firebase configuration Object
+FirebaseAuth auth; //Define the FirebaseAuth data for authentication data
+FirebaseConfig config; //Define the FirebaseConfig data for config data
 
 unsigned long sendDataPrevMillis = 0;
 int count = 0;
@@ -50,10 +50,12 @@ void streamCallback(FirebaseStream data){
                 data.dataPath().c_str(),
                 data.dataType().c_str(),
                 data.eventType().c_str());
-  printResult(data); // see addons/RTDBHelper.h
+  printResult(data); //See addons/RTDBHelper.h
   Serial.println();
 
   Serial.printf("Received stream payload size: %d (Max. %d)\n\n", data.payloadLength(), data.maxPayloadLength());
+  // Due to limited of stack memory, do not perform any task that used large memory here especially starting connect to server.
+  // Just set this flag and check it status later.
   dataChanged = true;
 }
 
@@ -78,11 +80,11 @@ void setup(){
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to Wi-Fi");
 
-  while (WiFi.status() != WL_CONNECTED){
-    Serial.print(".");
+  while (WiFi.status() != WL_CONNECTED){ //Returns the connection status, WL_CONNECTED : assigned when connected to a WiFi network
+    Serial.print("."); //Print (".") as long as it is not connected
     delay(300);
   }
-  Serial.println();
+  Serial.println(); //Print the IP address.
   Serial.print("Connected with IP: ");
   Serial.println(WiFi.localIP());
   Serial.println();
@@ -93,6 +95,7 @@ void setup(){
   /* Assign the RTDB URL (required) */
   config.database_url = DATABASE_URL;
 
+  /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
   /* Sign up */
@@ -107,6 +110,7 @@ void setup(){
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
   
+  // To connect without auth in tp8, see Authentications/tp8/tp8.ino
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
@@ -126,6 +130,7 @@ void loop(){
     return;
   }
   
+  // Firebase.ready() should be called repeatedly to handle authentication tasks.
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0)){
     sendDataPrevMillis = millis();
     //Write an Int number on the database path test/int

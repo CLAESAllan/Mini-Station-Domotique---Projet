@@ -43,7 +43,9 @@ unsigned long debounceDelay = 50;    // the debounce time; increase if the outpu
 
 //Read the temperature of DHT11
 String readDHTTemperature() {
+  //Read temperature as Celsius
   float t = dht.readTemperature();
+  //Check if any reads failed and exit early (to try again).
   if (isnan(t)) {    
     Serial.println("Failed to read from DHT temp!");
     return "--";
@@ -64,6 +66,7 @@ String outputState(){
   return "";
 }
 
+//Replaces placeholder with DHT values
 String processor(const String& var){
   if(var == "TEMPERATURE"){
     return readDHTTemperature();
@@ -71,7 +74,6 @@ String processor(const String& var){
 
   return String();
 }
-
 
 const char *PARAM_MESSAGE = "message";
 
@@ -144,6 +146,7 @@ void setup(){
     //Send a GET request to <IP>/get?message=<message>
     server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request){
       String message;
+      //GET input1 value on <ESP_IP>/get?state=<message>
       if (request->hasParam(PARAM_MESSAGE)) {
         message = request->getParam(PARAM_MESSAGE)->value();
       } 
@@ -182,7 +185,7 @@ void loop(){
 
   if ((millis() - lastDebounceTime) > debounceDelay) {
     /*Whatever the reading is at, it's been there for longer than the debounce
-    *delay, so take it as the actual current state:*/
+    *delay, so take it as the actual current state.*/
 
     //If the button state has changed:
     if (reading != buttonState) {
@@ -197,6 +200,6 @@ void loop(){
   //Set the LED:
   digitalWrite(LED, ledState);
 
-  //Save the reading. Next time through the loop, it'll be the lastButtonState:
+  //Save the reading. Next time through the loop, it'll be the lastButtonStat.
   lastButtonState = reading;
 }

@@ -3,7 +3,7 @@ function buttonON() {
     bpON.open("GET", "/update?state=1", true);
     bpON.send();
   }
-  function buttonOFF() {
+function buttonOFF() {
     var bpOFF = new XMLHttpRequest();
     bpOFF.open("GET", "/update?state=0", true);
     bpOFF.send();
