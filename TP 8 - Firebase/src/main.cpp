@@ -38,12 +38,12 @@ FirebaseData stream;
 FirebaseAuth auth; //Define the FirebaseAuth data for authentication data
 FirebaseConfig config; //Define the FirebaseConfig data for config data
 
-unsigned long sendDataPrevMillis = 0;
+unsigned long sendDataPrevMillis = 0; 
 int count = 0;
 bool signupOK = false;
 volatile bool dataChanged = false;
 
-
+// Callback function that runs on database changes
 void streamCallback(FirebaseStream data){
   Serial.printf("sream path, %s\nevent path, %s\ndata type, %s\nevent type, %s\n\n",
                 data.streamPath().c_str(),

@@ -1,15 +1,26 @@
+//Libraries
 #include <Arduino.h>
 #include <CAN.h>
-//#include 
+
+//CAN flags 
 unsigned char Can_Rcv_Flags;
+
+//Received data length (bytes)
 unsigned char Rx_Data_Len;
+
+//Reception flag
 char Msg_Rcvd;
-const long ID_1st = 12111, ID_2nd = 3;
+
+const long ID_1st = 12111, ID_2nd = 3; //Node IDs
+
+//Send data ID
 long Rx_ID;
+
+//Can Received data
 char RX_Data[8];
 
 void onReceive(int packetSize) {
-  // received a packet
+  //Received a packet
   Serial.print("Received ");
 
   if (CAN.packetExtended()) {
@@ -31,7 +42,7 @@ void onReceive(int packetSize) {
     Serial.print(" and length ");
     Serial.println(packetSize);
     Serial.print((char)CAN.read());
-    // only print packet data for non-RTR packets
+    //Only print packet data for non-RTR packets
     while (CAN.available()) {
       Serial.print((char)CAN.read());
     }
@@ -41,7 +52,7 @@ void onReceive(int packetSize) {
   Serial.println();
 }
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600); //Setup the monitor serial
   while (!Serial);
 
   Serial.println("CAN Receiver Callback");
@@ -58,5 +69,3 @@ void setup() {
 
 void loop() {
 }
-
-
