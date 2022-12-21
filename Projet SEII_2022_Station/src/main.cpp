@@ -29,12 +29,6 @@ const char* mqtt_server = "192.168.137.1";  //192.168.137.1   172.18.0.3
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-char button[6]; // trame for data to be send
-
-bool etatLED = LOW; // the current state of LED
-int etatBP; // the current state of button
-int dernierEtatBP;// the previous state of button
-
 Servo myservo;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
 
@@ -130,8 +124,8 @@ void setup() {
  
  dht.begin();//  module DHT11
 
- Serial.begin(115200);// initialize serial monitor
- setup_wifi();//
+ Serial.begin(115200); //Initialize serial monitor
+ setup_wifi();
  // set server mqtt on port 1883 to the client
  client.setServer(mqtt_server, 1883);
  // set the function callback to the client
@@ -164,20 +158,6 @@ for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
   }
-
-//Toggle Button
- etatBP = digitalRead(BP);// read new state
- if (dernierEtatBP == HIGH && etatBP == LOW) {
-  etatLED = !etatLED;
-  //Control LED arccoding to the toggled state
-  digitalWrite(LED, etatLED);
-  //Convert to a data that could be send
-  snprintf(button, 6, "%u", etatLED);
-  //Send to the topic BP 
-  client.publish("BP", button);
- }
- dernierEtatBP = etatBP;// Update state toggle
- delay(50);
 
 //Publishes new temperature and humidity every 3 seconds
  if (now - lastMeasure > 3000) {
@@ -212,10 +192,9 @@ for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
  Serial.print(t);
  Serial.print(" *C ");
 
-  //we could then access the data inside it using the same dot/bracket
+  //We could then access the data inside it using the same dot/bracket
   doc["temperature"] = tCHAR;
   doc["humidite"] = h;
-  doc["etatBP"] = button;
 
   // Generate the minified JSON and send it to the Serial port.
   serializeJson(doc, Serial);
