@@ -5,15 +5,18 @@
 #include <PubSubClient.h>
 #include <DHT.h>
 #include <DHT_U.h>
-//#include <analogWrite.h>
 #include <Adafruit_NeoPixel.h>
+#include <ESP32Servo.h>
 
 //Definition of variables
 #define DHTPin 26
 #define DHTTYPE DHT11 //type of sensor
 #define BP 12
-//#define RGB 0
 #define LED 32
+
+int digitalPin = 19;
+int NombrePassage = 0;
+int pos = 0;    // variable to store the servo position
 
 //Change the credentials below, so your ESP32 connects to your router
 const char* ssid = "Ordi de Gilles";
@@ -32,12 +35,8 @@ bool etatLED = LOW; // the current state of LED
 int etatBP; // the current state of button
 int dernierEtatBP;// the previous state of button
 
-//int valeurR; // Variable to stock value Red reveived
-//int valeurG; // Variable to stock value Green reveived
-//int valeurB; // Variable to stock value Blue reveived
-
-//Adafruit_NeoPixel strip = Adafruit_NeoPixel(1, RGB, NEO_GRB + NEO_KHZ800);
-//#define BRIGHTNESS 50 // Set BRIGHTNESS to about 1/5 (max = 255)
+Servo myservo;  // create servo object to control a servo
+// twelve servo objects can be created on most boards
 
 // Initialize DHT sensor.
 DHT dht(DHTPin, DHTTYPE);
@@ -95,37 +94,6 @@ void callback(String topic, byte* message, unsigned int length) {
   Serial.print("Off");
  }
 }
-
- /*If a message is received on the subject valeurR 
- *the values to the GPIO according to the message 
- *is for the control of the lED RGB (color Red)
- */
- //if(topic=="valeurR")
- //{
- //valeurR = messageTemp.toInt();
-  //Serial.println(valeurR);
- //}
-
- /*If a message is received on the subject valeurG 
- *the values to the GPIO according to the message 
- *is for the control of the lED RGB (color Green)
- */
- //if(topic=="valeurG")
- //{
- //valeurG = messageTemp.toInt();
-  //Serial.println(valeurG);
- //}
-
- /*If a message is received on the subject valeurB 
- *the values to the GPIO according to the message 
- *is for the control of the lED RGB (color Blue)
- */
- //if(topic=="valeurB")
- //{
- //valeurB = messageTemp.toInt();
-  //Serial.println(valeurB);
- //}
- //Serial.println();
 }
 
 /* This functions reconnects your ESP32
@@ -141,12 +109,6 @@ void reconnect() {
  
  //subscribe to topic LED
  client.subscribe("LED");
- //subscribe to topic valeurR
- //client.subscribe("valeurR");
- //subscribe to topic valeurG
- //client.subscribe("valeurG");
- //subscribe to topic valeurB
- //client.subscribe("valeurB");
  //subscribe to topic JSON
  client.subscribe("JSON");
  } else {
@@ -163,10 +125,8 @@ void setup() {
  // Initialize pins used
  pinMode(LED, OUTPUT);
  pinMode(BP, INPUT);
-  
- //strip.begin();
- //strip.setBrightness(50);
- //strip.show(); // Initialize all pixels to 'off'
+
+ myservo.attach(13);  // attaches the servo on pin 13 to the servo object
  
  dht.begin();//  module DHT11
 
@@ -179,6 +139,7 @@ void setup() {
 }
 
 void loop() {
+int digitalVal = digitalRead(digitalPin);
 StaticJsonDocument<200> doc;
  if (!client.connected()) {
   reconnect();
@@ -186,8 +147,23 @@ StaticJsonDocument<200> doc;
 if(!client.loop())
  client.connect(clientId.c_str(),"","095f3cdd2282");
  now = millis();
-//strip.fill(strip.Color(valeurR, valeurG, valeurB, BRIGHTNESS));
-//strip.show();
+  
+  if (digitalVal == LOW) {
+    NombrePassage += 1;
+    Serial.println(NombrePassage);
+  }
+  
+  delay(100);
+
+for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
 
 //Toggle Button
  etatBP = digitalRead(BP);// read new state
