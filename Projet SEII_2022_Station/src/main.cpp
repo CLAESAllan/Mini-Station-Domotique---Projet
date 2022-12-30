@@ -5,12 +5,11 @@
 #include <PubSubClient.h>
 #include <DHT.h>
 #include <DHT_U.h>
-#include <Adafruit_NeoPixel.h>
 #include <ESP32Servo.h>
 
 //Definition of variables
-#define DHTPin 26
-#define DHTTYPE DHT11 //type of sensor
+#define DHTPin 4
+#define DHTTYPE DHT22 //type of sensor
 #define BP 12
 #define LED 32
 
