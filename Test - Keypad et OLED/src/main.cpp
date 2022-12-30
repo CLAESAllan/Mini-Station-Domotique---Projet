@@ -74,7 +74,7 @@ Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_N
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-int codeROW = 35;
+int codeROW = 40;
 volatile u_int numberOfEntry = 0;
 int boucleBuzz = 1000;
 bool chiffre_valid;
@@ -118,8 +118,10 @@ void reconnect() {
  //subscribe to topic JSON
  client.subscribe("JSON");
  client.subscribe("codeBON");
+ client.subscribe("ActionVerrou");
  client.subscribe("temperatureOUT");
  client.subscribe("humiditeOUT");
+
  } else {
  Serial.print("failed, rc=");
  Serial.print(client.state());
@@ -133,16 +135,55 @@ void reconnect() {
 void AffichageBase(){
     display.clearDisplay();
     display.setTextSize(1);
-    display.setCursor(10, 8);
+    display.setCursor(13, 12);
     display.println("Introduire code :");
     display.drawRoundRect(0, 0, 128, 64, 8, WHITE);
+    display.drawRect(35,28,56,23,WHITE);
     display.display();
 }
 
 void AffichageDHT22(){
   display.setTextSize(1);
   display.drawRoundRect(0, 0, 128, 64, 8, WHITE);
-  display.drawRoundRect(42,25,50,33,8,WHITE);
+  display.drawRoundRect(30,26,60,31,8,WHITE);
+  display.drawPixel(39,43,WHITE);
+  display.drawPixel(39,44,WHITE);
+
+  display.drawPixel(38,45,WHITE);
+  display.drawPixel(38,46,WHITE);
+
+  display.drawPixel(40,45,WHITE);
+  display.drawPixel(40,46,WHITE);
+
+  display.drawPixel(37,47,WHITE);
+  display.drawPixel(37,48,WHITE);
+
+  display.drawPixel(41,47,WHITE);
+  display.drawPixel(41,48,WHITE);
+
+  display.drawPixel(36,49,WHITE);
+  display.drawPixel(36,50,WHITE);
+  display.drawPixel(36,51,WHITE);
+
+  display.drawPixel(42,49,WHITE);
+  display.drawPixel(42,50,WHITE);
+  display.drawPixel(42,51,WHITE);
+
+  display.drawPixel(37,52,WHITE);
+
+  display.drawPixel(41,52,WHITE);
+
+  display.drawPixel(38,53,WHITE);
+  display.drawPixel(39,53,WHITE);
+  display.drawPixel(40,53,WHITE);
+
+  display.drawLine(37,35,37,37,WHITE);
+  display.drawLine(38,29,38,38,WHITE);
+  display.drawLine(39,32,39,38,WHITE);
+  display.drawLine(40,29,40,38,WHITE);
+  display.drawLine(41,35,41,37,WHITE);
+  display.drawPixel(39,28,WHITE);
+
   display.setCursor(47, 30);
   display.println("T:");
   display.setCursor(72, 30);
@@ -222,11 +263,13 @@ if (key == '#' ){
         tone(BUZZZER_PIN,2000,500);
         digitalWrite(LEDrouge,HIGH);
         display.clearDisplay();
+        display.drawRoundRect(0, 0, 128, 64, 8, WHITE);
+        display.drawCircle(64,35,13,WHITE);
+        display.drawLine(55,44,73,26,WHITE);
         display.setTextSize(1);
-        display.setCursor(25, 20);
+        display.setCursor(21, 10);
         display.println("Code incorrect");
         display.display();
-        
     }
 }
   
@@ -237,7 +280,7 @@ if (key == '#' ){
     codeIntroduit[3] = '0';
     AffichageBase();
     numberOfEntry = 0;
-    codeROW = 35;
+    codeROW = 40;
     digitalWrite(LEDrouge,LOW);
     digitalWrite(LEDvert,LOW);
     check_validation = true;
@@ -254,7 +297,7 @@ for (int x = 0; x < 10; x++){
     tone(BUZZZER_PIN,rand()%7500 + 2500,175);
     codeIntroduit[numberOfEntry] = key;
     display.setTextSize(2);
-    display.setCursor(codeROW, 28);
+    display.setCursor(codeROW, 33);
     display.println(key);
      if(key == motDePasse[0] && numberOfEntry == 0){
         codeIntroduit[0] = key;
