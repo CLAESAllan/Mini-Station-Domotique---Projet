@@ -4,6 +4,40 @@
 #include <Adafruit_SSD1306.h>
 #include <Keypad.h>
 #include <ESP32Tone.h>
+#include <ArduinoJson.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+//Change the credentials below, so your ESP32 connects to your router
+const char* ssid = "Ordi de Gilles";
+const char* password = "12345678";
+
+//Connect to your MQTT broker
+const char* mqtt_server = "192.168.137.1";  //192.168.137.1   172.18.0.3
+
+//Initializes the espClient.
+WiFiClient espClient;
+PubSubClient client(espClient);
+long now = millis();
+long lastMeasure = 0;
+String clientId = "Hello";
+
+//This functions connects your ESP32 to your router
+void setup_wifi() {
+  delay(10);
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+ Serial.println("");
+ Serial.print("WiFi connected - ESP IP address: ");
+ Serial.println(WiFi.localIP());
+}
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -40,7 +74,7 @@ Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_N
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-int codeROW = 33;
+int codeROW = 35;
 volatile u_int numberOfEntry = 0;
 int boucleBuzz = 1000;
 bool chiffre_valid;
@@ -48,9 +82,94 @@ bool check_validation = true;
 char chiffres[10]= {'0','1','2', '3', '4', '5', '6','7', '8', '9'};
 char motDePasse[4] = {'3','6','1','0'};
 char codeIntroduit[4] = {};
+int temperature;
+int humidite;
+
+void callback(String topic, byte* message, unsigned int length) {
+  Serial.print("Message arrived on topic: ");
+  Serial.print(topic);
+  Serial.print(". Message: ");
+  String messageTemp;
+
+ for (int i = 0; i < length; i++) {
+    Serial.print((char)message[i]);
+    messageTemp += (char)message[i];
+ }
+ if (topic == "temperatureOUT"){
+  temperature = messageTemp.toInt();
+ }
+ if (topic == "humiditeOUT"){
+  humidite = messageTemp.toInt();
+ }
+ 
+ Serial.println();
+}
+void reconnect() {
+ // Loop until we're reconnected
+ while (!client.connected()) {
+ Serial.print("Attempting MQTT connection...");
+ // Attempt to connect
+ 
+ if (client.connect(clientId.c_str(),"","095f3cdd2282")) {
+ Serial.println("connected");
+ 
+ //subscribe to topic LED
+ client.subscribe("LED");
+ //subscribe to topic JSON
+ client.subscribe("JSON");
+ client.subscribe("codeBON");
+ client.subscribe("temperatureOUT");
+ client.subscribe("humiditeOUT");
+ } else {
+ Serial.print("failed, rc=");
+ Serial.print(client.state());
+ Serial.println(" try again in 5 seconds");
+ // Wait 5 seconds before retrying
+ delay(5000);
+ }
+ }
+}
+
+void AffichageBase(){
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setCursor(10, 8);
+    display.println("Introduire code :");
+    display.drawRoundRect(0, 0, 128, 64, 8, WHITE);
+    display.display();
+}
+
+void AffichageDHT22(){
+  display.setTextSize(1);
+  display.drawRoundRect(0, 0, 128, 64, 8, WHITE);
+  display.drawRoundRect(42,25,50,33,8,WHITE);
+  display.setCursor(47, 30);
+  display.println("T:");
+  display.setCursor(72, 30);
+  display.cp437(true);
+  display.write(248);
+  display.setCursor(79, 30);
+  display.println("C");
+  display.setCursor(47, 45);
+  display.println("H:");
+  display.setCursor(77, 45);
+  display.println("%");
+  display.setTextSize(1);
+  display.setCursor(58, 30);
+  display.println(temperature);
+  display.setCursor(58, 45);
+  display.println(humidite);
+  display.display(); 
+}
 
 void setup() {
   Serial.begin(115200);
+  setup_wifi();
+  // set server mqtt on port 1883 to the client
+  client.setServer(mqtt_server, 1883);
+  // set the function callback to the client
+  client.setCallback(callback);
+
   pinMode(LEDvert,OUTPUT);
   pinMode(LEDrouge,OUTPUT);
   pinMode(BUZZZER_PIN,OUTPUT);
@@ -61,30 +180,38 @@ void setup() {
   }
   delay(2000);
   display.clearDisplay();
-
-  display.setTextSize(1);
   display.setTextColor(WHITE);
-  display.setCursor(10, 8);
-  // Display static text
-  display.println("Introduire code :");
-  display.display(); 
+  AffichageBase();
 }
 
 void loop() {
+  if (!client.connected()) {
+    reconnect();
+}
+  if(!client.loop()){
+    client.connect(clientId.c_str(),"","095f3cdd2282");
+    now = millis();
+    delay(100);
+}
   char key = keypad.getKey();
   chiffre_valid = false;
 
   //int tailleTableau = sizeof(codeIntroduit);
-
+ 
+  
 if (key == '#' ){
     check_validation = false;
      if(compareArray(motDePasse,codeIntroduit,4) == 0){
         digitalWrite(LEDvert,HIGH);
         display.clearDisplay();
         display.setTextSize(1);
-        display.setCursor(25 , 20);
+        display.drawRect(25,7,81,14,WHITE);
+        display.setCursor(30 , 10);
         display.println("Code correct");
+        display.setTextColor(WHITE);
+        AffichageDHT22();
         display.display();
+        client.publish("codeBON","Code BON");
         while (boucleBuzz <4000){
           tone(BUZZZER_PIN,boucleBuzz,125);
           boucleBuzz+=500;
@@ -108,13 +235,9 @@ if (key == '#' ){
     codeIntroduit[1] = '0';
     codeIntroduit[2] = '0';
     codeIntroduit[3] = '0';
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setCursor(10, 8);
-    display.println("Introduire code :");
-    display.display();
+    AffichageBase();
     numberOfEntry = 0;
-    codeROW = 33;
+    codeROW = 35;
     digitalWrite(LEDrouge,LOW);
     digitalWrite(LEDvert,LOW);
     check_validation = true;
@@ -131,7 +254,7 @@ for (int x = 0; x < 10; x++){
     tone(BUZZZER_PIN,rand()%7500 + 2500,175);
     codeIntroduit[numberOfEntry] = key;
     display.setTextSize(2);
-    display.setCursor(codeROW, 25);
+    display.setCursor(codeROW, 28);
     display.println(key);
      if(key == motDePasse[0] && numberOfEntry == 0){
         codeIntroduit[0] = key;
