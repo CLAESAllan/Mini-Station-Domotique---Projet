@@ -13,9 +13,12 @@
 #define BP 12
 #define LED 32
 
-int digitalPin = 19;
+int pinREED = 19;
 int NombrePassage = 0;
 int pos = 0;    // variable to store the servo position
+int lastCheck = 0;
+String CodeRecu = "pasOK";
+String etatReset = "Reset";
 
 //Change the credentials below, so your ESP32 connects to your router
 const char* ssid = "Ordi de Gilles";
@@ -71,22 +74,12 @@ void callback(String topic, byte* message, unsigned int length) {
  messageTemp += (char)message[i];
  }
  Serial.println();
- 
- /* If a message is received on the room/lamp topic, 
-  *check if the message is on or off.
-  *You activate the GPIO of the lamp according to the message.
- */
- if(topic=="LED"){
-  Serial.print("Changing Room lamp to ");
- if(messageTemp == "on"){
-  digitalWrite(LED, HIGH);
-  Serial.print("On");
- }
- else if(messageTemp == "off"){
-  digitalWrite(LED, LOW);
-  Serial.print("Off");
- }
-}
+  if(topic == "EtatCode"){
+    CodeRecu = messageTemp;
+  }
+  if(topic == "resetInfractionOUT"){
+    etatReset = messageTemp;
+  }
 }
 
 /* This functions reconnects your ESP32
@@ -99,11 +92,9 @@ void reconnect() {
  
  if (client.connect(clientId.c_str(),"","095f3cdd2282")) {
  Serial.println("connected");
- 
- //subscribe to topic LED
- client.subscribe("LED");
- //subscribe to topic JSON
- client.subscribe("JSON");
+ client.subscribe("EtatCode");
+ client.subscribe("etatREED");
+ client.subscribe("resetInfractionOUT");
  } else {
  Serial.print("failed, rc=");
  Serial.print(client.state());
@@ -132,7 +123,7 @@ void setup() {
 }
 
 void loop() {
-int digitalVal = digitalRead(digitalPin);
+int etatReed = digitalRead(pinREED);
 StaticJsonDocument<200> doc;
  if (!client.connected()) {
   reconnect();
@@ -141,22 +132,30 @@ if(!client.loop())
  client.connect(clientId.c_str(),"","095f3cdd2282");
  now = millis();
   
+  /*/
   if (digitalVal == LOW) {
     NombrePassage += 1;
     Serial.println(NombrePassage);
   }
-  
-  delay(100);
+  /*/
 
-for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
+  if(etatReed == LOW && lastCheck == 0 && etatReset == "Reset"){
+    //cbon vois aimant donc fermer
+    client.publish("etatREED","La porte est sécurisé");
+    lastCheck = 1;
+  }else if (etatReed == HIGH && CodeRecu == "pasOK" && lastCheck == 1){
+    client.publish("etatREED","!!! INFRACTION !!!");
+    etatReset = "pasReset";
+    lastCheck = 0 ;
   }
-  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
+
+  if(CodeRecu == "pasOK"){
+    myservo.write(95); 
   }
+  else if (CodeRecu == "OK"){
+    myservo.write(0); 
+  }
+  delay(100);
 
 //Publishes new temperature and humidity every 3 seconds
  if (now - lastMeasure > 3000) {
@@ -185,26 +184,27 @@ for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
  client.publish("temperature", temperatureTemp);
  client.publish("humidite", humidityTemp);
 
+/*/
  Serial.print("Humidity: ");
  Serial.print(h);
  Serial.print(" %\t Temperature: ");
  Serial.print(t);
  Serial.print(" *C ");
-
+/*/
   //We could then access the data inside it using the same dot/bracket
   doc["temperature"] = tCHAR;
   doc["humidite"] = h;
 
   // Generate the minified JSON and send it to the Serial port.
-  serializeJson(doc, Serial);
+  //serializeJson(doc, Serial);
   static char jsonCHAR [100];
-  serializeJson(doc, jsonCHAR);
+  //serializeJson(doc, jsonCHAR);
 
   client.publish("JSON",jsonCHAR );
   // Start a new line
-  Serial.println();
+  //Serial.println();
 
   // Generate the prettified JSON and send it to the Serial port.
-  serializeJsonPretty(doc, Serial);
+  //serializeJsonPretty(doc, Serial);
   }
 }
