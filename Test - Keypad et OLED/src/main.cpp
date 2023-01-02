@@ -20,7 +20,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 long now = millis();
 long lastMeasure = 0;
-String clientId = "Hello";
+String clientId = "ello";
 
 //This functions connects your ESP32 to your router
 void setup_wifi() {
@@ -113,14 +113,11 @@ void reconnect() {
  if (client.connect(clientId.c_str(),"","095f3cdd2282")) {
  Serial.println("connected");
  
- //subscribe to topic LED
- client.subscribe("LED");
- //subscribe to topic JSON
- client.subscribe("JSON");
  client.subscribe("codeBON");
  client.subscribe("ActionVerrou");
  client.subscribe("temperatureOUT");
  client.subscribe("humiditeOUT");
+ client.subscribe("resetInfraction");
 
  } else {
  Serial.print("failed, rc=");
@@ -252,7 +249,9 @@ if (key == '#' ){
         display.setTextColor(WHITE);
         AffichageDHT22();
         display.display();
-        client.publish("codeBON","Code BON");
+        client.publish("codeBON","OK");
+        Serial.print(key);
+        
         while (boucleBuzz <4000){
           tone(BUZZZER_PIN,boucleBuzz,125);
           boucleBuzz+=500;
@@ -269,10 +268,14 @@ if (key == '#' ){
         display.setTextSize(1);
         display.setCursor(21, 10);
         display.println("Code incorrect");
+        client.publish("codeBON","pasOK");
         display.display();
     }
 }
-  
+  if (key == 'A' && compareArray(motDePasse,codeIntroduit,4) == 0 ){
+            client.publish("resetInfraction","Reset");
+          }
+
   if(key == 'D' ){
     codeIntroduit[0] = '0';
     codeIntroduit[1] = '0';
@@ -283,6 +286,8 @@ if (key == '#' ){
     codeROW = 40;
     digitalWrite(LEDrouge,LOW);
     digitalWrite(LEDvert,LOW);
+    client.publish("codeBON","pasOK");
+    client.publish("resetInfraction","pasReset");
     check_validation = true;
   }
 
