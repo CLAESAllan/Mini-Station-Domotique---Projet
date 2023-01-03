@@ -17,7 +17,6 @@ int pinREED = 19;
 int NombrePassage = 0;
 int pos = 0;    // variable to store the servo position
 int lastCheck = 0;
-int JsonREED;
 String CodeRecu = "pasOK";
 String etatReset = "Reset";
 char json_DHT22[256];
@@ -136,7 +135,7 @@ int etatReed = digitalRead(pinREED);
 if(!client.loop())
  client.connect(clientId.c_str(),"","095f3cdd2282");
  now = millis();
-
+/*/
   if(etatReed == LOW && lastCheck == 0 && etatReset == "Reset"){
     //cbon vois aimant donc fermer
     client.publish("etatREED","La porte est sécurisé");
@@ -152,7 +151,7 @@ if(!client.loop())
     etatReset = "pasReset";
     lastCheck = 0 ;
   }
-
+/*/
   if(CodeRecu == "pasOK"){
     myservo.write(95); 
   }
@@ -167,8 +166,8 @@ if(!client.loop())
  
  float h = dht.readHumidity(); // Read humidity in %
  float t = dht.readTemperature(); //Read temperature as Celsius
- static char tCHAR[3];
- dtostrf(t,3,1,tCHAR); //Function dtostrf converts double and floating-point values into a string.
+ //static char tCHAR[3];
+ //dtostrf(t,3,1,tCHAR); //Function dtostrf converts double and floating-point values into a string.
 
   //Check if any reads failed and exit early (to try again).
  if (isnan(h) || isnan(t)) {
@@ -185,6 +184,9 @@ if(!client.loop())
  dtostrf(h, 6, 2, humidityTemp); //Function dtostrf converts double and floating-point values into a string.
  
  //Publishes Temperature and Humidity values
+ Serial.println("Readed");
+ Serial.println(temperatureTemp);
+ Serial.println(humidityTemp);
  client.publish("temperature", temperatureTemp);
  client.publish("humidite", humidityTemp);
 
@@ -197,7 +199,7 @@ if(!client.loop())
 
   // Generate the minified JSON and send it to the Serial port.
   serializeJson(docDHT22, json_DHT22);
-
+  Serial.println(json_DHT22);
   client.publish("JSON_DHT22",json_DHT22);
 
   // Generate the prettified JSON and send it to the Serial port.
