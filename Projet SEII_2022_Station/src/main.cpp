@@ -17,6 +17,12 @@ int pinREED = 19;
 int NombrePassage = 0;
 int pos = 0;    // variable to store the servo position
 int lastCheck = 0;
+float lastTemp;
+float lastHum;
+float newTemp;
+float newHum;
+
+
 String CodeRecu = "pasOK";
 String etatReset = "Reset";
 char json_DHT22[256];
@@ -105,8 +111,19 @@ void reconnect() {
  Serial.println(" try again in 5 seconds");
  // Wait 5 seconds before retrying
  delay(5000);
+  }
  }
- }
+}
+
+int checkDHT22(){
+  if((newHum < lastHum - 0.5 || newHum > lastHum + 0.5) || (newTemp < lastTemp - 0.5 || newTemp > lastTemp + 0.5)){
+    Serial.println("DHT22 updt");
+    return 1;
+  }
+  else{
+    Serial.println("DHT22 pas de updt");
+    return 0;
+  } 
 }
 
 void setup() {
@@ -124,6 +141,8 @@ void setup() {
  client.setServer(mqtt_server, 1883);
  // set the function callback to the client
  client.setCallback(callback);
+ lastHum = dht.readHumidity(); // Read humidity in %
+ lastTemp = dht.readTemperature(); //Read temperature as Celsius
 }
 
 void loop() {
@@ -166,6 +185,8 @@ if(!client.loop())
  
  float h = dht.readHumidity(); // Read humidity in %
  float t = dht.readTemperature(); //Read temperature as Celsius
+ newHum = h;
+ newTemp = t;
  //static char tCHAR[3];
  //dtostrf(t,3,1,tCHAR); //Function dtostrf converts double and floating-point values into a string.
 
@@ -174,21 +195,24 @@ if(!client.loop())
  Serial.println("Failed to read from DHT sensor!");
  return;
  }
+if (checkDHT22){
+
 
 //Computes temperature values in Celsius
  float hic = dht.computeHeatIndex(t, h, false);
+
  static char temperatureTemp[7];
- dtostrf(hic, 6, 2, temperatureTemp); //Function dtostrf converts double and floating-point values into a string.
+ dtostrf(t, 6, 2, temperatureTemp); //Function dtostrf converts double and floating-point values into a string.
 
  static char humidityTemp[7];
  dtostrf(h, 6, 2, humidityTemp); //Function dtostrf converts double and floating-point values into a string.
  
+
+
  //Publishes Temperature and Humidity values
- Serial.println("Readed");
- Serial.println(temperatureTemp);
- Serial.println(humidityTemp);
- client.publish("temperature", temperatureTemp);
- client.publish("humidite", humidityTemp);
+
+ //client.publish("temperature", temperatureTemp);
+ //client.publish("humidite", humidityTemp);
 
  //DynamicJsonDocument doc(256);
 
@@ -202,8 +226,8 @@ if(!client.loop())
   Serial.println(json_DHT22);
   client.publish("JSON_DHT22",json_DHT22);
 
-  //grd
   // Generate the prettified JSON and send it to the Serial port.
   //serializeJsonPretty(doc, Serial);
+    }
   }
 }
