@@ -48,6 +48,10 @@ void setup_wifi() {
 #define LEDrouge 26
 #define LEDvert 25
 #define BUZZZER_PIN 32
+char json_codeBON[256];
+char json_resetInfraction[256];
+DynamicJsonDocument doccodeBON(256);
+DynamicJsonDocument docresetInfraction(256);
 
 char keys[ROW_NUM][COLUMN_NUM] = {
   {'1', '2', '3', 'A'},
@@ -260,6 +264,9 @@ if (key == '#' ){
             newDataHum = 0;
           }
         client.publish("codeBON","OK");
+        doccodeBon["codeBON", json_codeBON];
+        serializeJson(doccodeBON, json_codeBON);
+        client.publish("JSON_codeBON", json_codeBON);
         while (boucleBuzz <4000){
           tone(BUZZZER_PIN,boucleBuzz,125);
           boucleBuzz+=500;
@@ -277,10 +284,16 @@ if (key == '#' ){
         display.setCursor(21, 10);
         display.println("Code incorrect");
         client.publish("codeBON","pasOK");
+        doccodeBon["codeBON", json_codeBON];
+        serializeJson(doccodeBON, json_codeBON);
+        client.publish("JSON_codeBON", json_codeBON);
         display.display();
     }
  }
-  if (key == 'A' && compareArray(motDePasse,codeIntroduit,4) == 0 ){
+  if (key == 'A' && compareArray(motDePasse,codeIntroduit,4) == 0 ){          
+            docresetInfraction["resetInfraction", json_resetInfraction];
+            serializeJson(docresetInfraction, json_resetInfraction);
+            client.publish("JSON_resetInfraction", json_resetInfraction);
             client.publish("resetInfraction","Reset");
           }
 
@@ -295,7 +308,13 @@ if (key == '#' ){
     digitalWrite(LEDrouge,LOW);
     digitalWrite(LEDvert,LOW);
     client.publish("codeBON","pasOK");
+    doccodeBon["codeBON", json_codeBON];
+    serializeJson(doccodeBON, json_codeBON);
+    client.publish("JSON_codeBON", json_codeBON);
     client.publish("resetInfraction","pasReset");
+    docresetInfraction["resetInfraction", json_resetInfraction];
+    serializeJson(docresetInfraction, json_resetInfraction);
+    client.publish("JSON_resetInfraction", json_resetInfraction);
     check_validation = true;
   }
 
