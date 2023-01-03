@@ -84,10 +84,10 @@ void callback(String topic, byte* message, unsigned int length) {
  messageTemp += (char)message[i];
  }
  Serial.println();
-  if(topic == "EtatCode"){
+  if(topic == "JSON_EtatCode"){
     CodeRecu = messageTemp;
   }
-  if(topic == "resetInfractionOUT"){
+  if(topic == "JSON_resetInfractionOUT"){
     etatReset = messageTemp;
   }
 }
@@ -102,9 +102,11 @@ void reconnect() {
  
  if (client.connect(clientId.c_str(),"","095f3cdd2282")) {
  Serial.println("connected");
- client.subscribe("EtatCode");
+ //client.subscribe("EtatCode");
  client.subscribe("etatREED");
- client.subscribe("resetInfractionOUT");
+ //client.subscribe("resetInfractionOUT");
+ client.subscribe("JSON_resetInfraction");
+ client.subscribe("JSON_EtatCode");
  } else {
  Serial.print("failed, rc=");
  Serial.print(client.state());
@@ -195,11 +197,11 @@ if(!client.loop())
  Serial.println("Failed to read from DHT sensor!");
  return;
  }
-if (checkDHT22){
 
+if (checkDHT22()){
 
 //Computes temperature values in Celsius
- float hic = dht.computeHeatIndex(t, h, false);
+//float hic = dht.computeHeatIndex(t, h, false);
 
  static char temperatureTemp[7];
  dtostrf(t, 6, 2, temperatureTemp); //Function dtostrf converts double and floating-point values into a string.
