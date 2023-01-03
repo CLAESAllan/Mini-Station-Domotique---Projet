@@ -202,6 +202,7 @@ if(!client.loop())
   Serial.println(json_DHT22);
   client.publish("JSON_DHT22",json_DHT22);
 
+  //grd
   // Generate the prettified JSON and send it to the Serial port.
   //serializeJsonPretty(doc, Serial);
   }
