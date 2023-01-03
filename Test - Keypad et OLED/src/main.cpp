@@ -242,7 +242,7 @@ void loop() {
   //int tailleTableau = sizeof(codeIntroduit);
  
   
-if (key == '#' ){
+if (key == '#' ){ 
     check_validation = false;
      if(compareArray(motDePasse,codeIntroduit,4) == 0){
         digitalWrite(LEDvert,HIGH);
@@ -253,25 +253,19 @@ if (key == '#' ){
         display.println("Code correct");
         display.setTextColor(WHITE);
         display.display();
+        if (newDataTemp == 1 && newDataHum == 1 ){
+            AffichageDHT22();
+            Serial.println("maj temp");
+            newDataTemp = 0;
+            newDataHum = 0;
+          }
         client.publish("codeBON","OK");
         while (boucleBuzz <4000){
           tone(BUZZZER_PIN,boucleBuzz,125);
           boucleBuzz+=500;
         }
-      boucleBuzz = 1000;
-      while (1){
-        key = keypad.getKey();
-        if (newDataTemp == 1 && newDataHum == 1 ){
-          AffichageDHT22();
-          Serial.println("maj temp");
-          newDataTemp = 0;
-          newDataHum = 0;
-          }
-        if(key =='D'){
-            break;
-         }        
+      boucleBuzz = 1000;        
         }
-    }
     else{
         tone(BUZZZER_PIN,2000,500);
         digitalWrite(LEDrouge,HIGH);
@@ -285,7 +279,7 @@ if (key == '#' ){
         client.publish("codeBON","pasOK");
         display.display();
     }
-}
+ }
   if (key == 'A' && compareArray(motDePasse,codeIntroduit,4) == 0 ){
             client.publish("resetInfraction","Reset");
           }
