@@ -263,10 +263,11 @@ if (key == '#' ){
             newDataTemp = 0;
             newDataHum = 0;
           }
-        client.publish("codeBON","OK");
-        doccodeBon["codeBON", json_codeBON];
+        //client.publish("codeBON","OK");
+        doccodeBON["etatCode"] = "OK";
         serializeJson(doccodeBON, json_codeBON);
         client.publish("JSON_codeBON", json_codeBON);
+        Serial.println(json_codeBON);
         while (boucleBuzz <4000){
           tone(BUZZZER_PIN,boucleBuzz,125);
           boucleBuzz+=500;
@@ -283,18 +284,18 @@ if (key == '#' ){
         display.setTextSize(1);
         display.setCursor(21, 10);
         display.println("Code incorrect");
-        client.publish("codeBON","pasOK");
-        doccodeBon["codeBON", json_codeBON];
+        //client.publish("codeBON","pasOK");
+        doccodeBON["etatCode"] = "pasOK";
         serializeJson(doccodeBON, json_codeBON);
         client.publish("JSON_codeBON", json_codeBON);
         display.display();
     }
  }
   if (key == 'A' && compareArray(motDePasse,codeIntroduit,4) == 0 ){          
-            docresetInfraction["resetInfraction", json_resetInfraction];
+            docresetInfraction["etatReset"] = "Reset" ;
             serializeJson(docresetInfraction, json_resetInfraction);
             client.publish("JSON_resetInfraction", json_resetInfraction);
-            client.publish("resetInfraction","Reset");
+            //client.publish("resetInfraction","Reset");
           }
 
   if(key == 'D' ){
@@ -307,12 +308,12 @@ if (key == '#' ){
     codeROW = 40;
     digitalWrite(LEDrouge,LOW);
     digitalWrite(LEDvert,LOW);
-    client.publish("codeBON","pasOK");
-    doccodeBon["codeBON", json_codeBON];
+    //client.publish("codeBON","pasOK");
+    doccodeBON["etatCode"] = "pasOK";
     serializeJson(doccodeBON, json_codeBON);
     client.publish("JSON_codeBON", json_codeBON);
-    client.publish("resetInfraction","pasReset");
-    docresetInfraction["resetInfraction", json_resetInfraction];
+    //client.publish("resetInfraction","pasReset");
+    docresetInfraction["etatReset"] = "pasReset";
     serializeJson(docresetInfraction, json_resetInfraction);
     client.publish("JSON_resetInfraction", json_resetInfraction);
     check_validation = true;
