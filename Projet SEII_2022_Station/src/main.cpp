@@ -17,8 +17,13 @@ int pinREED = 19;
 int NombrePassage = 0;
 int pos = 0;    // variable to store the servo position
 int lastCheck = 0;
+int JsonREED;
 String CodeRecu = "pasOK";
 String etatReset = "Reset";
+char json_DHT22[256];
+char json_Reed[256];
+DynamicJsonDocument docDHT22(256);
+DynamicJsonDocument docREED(256);
 
 //Change the credentials below, so your ESP32 connects to your router
 const char* ssid = "Ordi de Gilles";
@@ -124,27 +129,26 @@ void setup() {
 
 void loop() {
 int etatReed = digitalRead(pinREED);
-StaticJsonDocument<200> doc;
+//StaticJsonDocument<200> doc;
  if (!client.connected()) {
   reconnect();
  }
 if(!client.loop())
  client.connect(clientId.c_str(),"","095f3cdd2282");
  now = millis();
-  
-  /*/
-  if (digitalVal == LOW) {
-    NombrePassage += 1;
-    Serial.println(NombrePassage);
-  }
-  /*/
 
   if(etatReed == LOW && lastCheck == 0 && etatReset == "Reset"){
     //cbon vois aimant donc fermer
     client.publish("etatREED","La porte est sécurisé");
+    docREED["etatReed"] = etatReed;
+    serializeJson(docREED,json_Reed);
+    client.publish("JSON_REED", json_Reed);
     lastCheck = 1;
   }else if (etatReed == HIGH && CodeRecu == "pasOK" && lastCheck == 1){
     client.publish("etatREED","!!! INFRACTION !!!");
+    docREED["etatReed"] = etatReed;
+    serializeJson(docREED,json_Reed);
+    client.publish("JSON_REED", json_Reed);
     etatReset = "pasReset";
     lastCheck = 0 ;
   }
@@ -184,25 +188,17 @@ if(!client.loop())
  client.publish("temperature", temperatureTemp);
  client.publish("humidite", humidityTemp);
 
-/*/
- Serial.print("Humidity: ");
- Serial.print(h);
- Serial.print(" %\t Temperature: ");
- Serial.print(t);
- Serial.print(" *C ");
-/*/
+ //DynamicJsonDocument doc(256);
+
   //We could then access the data inside it using the same dot/bracket
-  doc["temperature"] = tCHAR;
-  doc["humidite"] = h;
+  docDHT22["temperature"] = temperatureTemp;
+  docDHT22["humidite"] = humidityTemp;
+  //char json_string[256];
 
   // Generate the minified JSON and send it to the Serial port.
-  //serializeJson(doc, Serial);
-  static char jsonCHAR [100];
-  //serializeJson(doc, jsonCHAR);
+  serializeJson(docDHT22, json_DHT22);
 
-  client.publish("JSON",jsonCHAR );
-  // Start a new line
-  //Serial.println();
+  client.publish("JSON_DHT22",json_DHT22);
 
   // Generate the prettified JSON and send it to the Serial port.
   //serializeJsonPretty(doc, Serial);
