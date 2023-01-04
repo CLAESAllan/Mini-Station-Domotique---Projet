@@ -49,8 +49,7 @@ int luminositeAmbiante = 0,luminositeMappe = 0,luminositeMappe255 = 0;
 BlynkTimer timer;
 
 // This function is called every time the Virtual Pin 0 state changes
-BLYNK_WRITE(V0)
-{
+BLYNK_WRITE(V0){
   // Set incoming value from pin V0 to a variable
   valeur = !valeur;
   // Update state
@@ -72,8 +71,7 @@ BLYNK_WRITE(V7){
 }
 
 // This function is called every time the device is connected to the Blynk.Cloud
-BLYNK_CONNECTED()
-{
+BLYNK_CONNECTED(){
   // Change Web Link Button message to "Congratulations!"
   Blynk.setProperty(V3, "offImageUrl", "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations.png");
   Blynk.setProperty(V3, "onImageUrl",  "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations_pressed.png");
@@ -81,8 +79,7 @@ BLYNK_CONNECTED()
 }
 
 // This function sends Arduino's uptime every second to Virtual Pin 2.
-void myTimerEvent()
-{
+void myTimerEvent(){
   // You can send any value at any time.
   // Please don't send more that 10 values per second.
   Blynk.virtualWrite(V2, millis() / 1000);
