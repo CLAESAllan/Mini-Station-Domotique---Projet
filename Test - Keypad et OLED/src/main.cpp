@@ -7,6 +7,19 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <BlynkSimpleEsp32.h>
+
+/*/
+// Template ID, Device Name and Auth Token are provided by the Blynk.Cloud
+// See the Device Info tab, or Template settings
+#define BLYNK_TEMPLATE_ID "TMPLSurqdlF9"
+#define BLYNK_DEVICE_NAME "ESP32 Telecommande"
+#define BLYNK_AUTH_TOKEN "yzAcrLhoLjU1mYiS1M2F8blwMj347oiT"
+
+// Comment this out to disable prints and save space
+#define BLYNK_PRINT Serial
+char auth[] = BLYNK_AUTH_TOKEN;
+/*/
 
 //Change the credentials below, so your ESP32 connects to your router
 const char* ssid = "Ordi de Gilles";
@@ -14,6 +27,8 @@ const char* password = "12345678";
 
 //Connect to your MQTT broker
 const char* mqtt_server = "192.168.137.1";  //192.168.137.1   172.18.0.3
+
+
 
 //Initializes the espClient.
 WiFiClient espClient;
@@ -90,6 +105,16 @@ int temperature;
 int humidite;
 int newDataTemp;
 int newDataHum;
+/*/
+BlynkTimer timer;
+
+BLYNK_WRITE(V0){
+  // Set incoming value from pin V0 to a variable
+  int value = param.asInt();
+  Serial.println(value);
+  //Blynk.virtualWrite(V1, value);
+}
+/*/
 
 void callback(String topic, byte* message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
@@ -212,10 +237,12 @@ void AffichageDHT22(){
 void setup() {
   Serial.begin(115200);
   setup_wifi();
+  //Blynk.begin(auth, ssid, password);
   // set server mqtt on port 1883 to the client
   client.setServer(mqtt_server, 1883);
   // set the function callback to the client
   client.setCallback(callback);
+  
 
   pinMode(LEDvert,OUTPUT);
   pinMode(LEDrouge,OUTPUT);
@@ -232,6 +259,7 @@ void setup() {
 }
 
 void loop() {
+  //Blynk.run();
   if (!client.connected()) {
     reconnect();
 }
@@ -240,9 +268,10 @@ void loop() {
     now = millis();
     delay(100);
 }
+  
   char key = keypad.getKey();
   chiffre_valid = false;
-
+  Blynk.virtualWrite(V1, key);
   //int tailleTableau = sizeof(codeIntroduit);
  
   
@@ -257,12 +286,9 @@ if (key == '#' ){
         display.println("Code correct");
         display.setTextColor(WHITE);
         display.display();
-        if (newDataTemp == 1 && newDataHum == 1 ){
-            AffichageDHT22();
-            Serial.println("maj temp");
-            newDataTemp = 0;
-            newDataHum = 0;
-          }
+        AffichageDHT22();
+            
+        
         //client.publish("codeBON","OK");
         doccodeBON["etatCode"] = "OK";
         serializeJson(doccodeBON, json_codeBON);
