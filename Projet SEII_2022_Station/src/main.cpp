@@ -17,18 +17,23 @@ int pinREED = 19;
 int NombrePassage = 0;
 int pos = 0;    // variable to store the servo position
 int lastCheck = 0;
+int lastEtatPorte = 0;
+int porteForce;
 float lastTemp;
 float lastHum;
 float newTemp;
 float newHum;
 
 
-String CodeRecu = "pasOK";
-String etatReset = "Reset";
+String CodeRecu;
+String etatReset;
 char json_DHT22[256];
 char json_Reed[256];
+char json_EtatPorte[256];
 DynamicJsonDocument docDHT22(256);
 DynamicJsonDocument docREED(256);
+DynamicJsonDocument docEtatPorte(256);
+
 
 //Change the credentials below, so your ESP32 connects to your router
 const char* ssid = "Ordi de Gilles";
@@ -85,11 +90,20 @@ void callback(String topic, byte* message, unsigned int length) {
  }
  Serial.println();
   if(topic == "JSON_EtatCode"){
+    //deserializeJson(docCodeValide, messageTemp);
+    //std::string(CodeRecu) = docCodeValide["etatCode"];
+    //CodeRecu = str(CodeRecuJSON);
     CodeRecu = messageTemp;
+    //Serial.println(CodeRecu);
   }
   if(topic == "JSON_resetInfractionOUT"){
     etatReset = messageTemp;
   }
+  if (topic == "BpManuelPorte"){
+    porteForce = messageTemp.toInt();
+    Serial.println(porteForce);
+  }
+  
 }
 
 /* This functions reconnects your ESP32
@@ -107,11 +121,13 @@ void reconnect() {
  //client.subscribe("resetInfractionOUT");
  client.subscribe("JSON_resetInfraction");
  client.subscribe("JSON_EtatCode");
+ client.subscribe("BpManuelPorte");
  } else {
  Serial.print("failed, rc=");
  Serial.print(client.state());
  Serial.println(" try again in 5 seconds");
  // Wait 5 seconds before retrying
+
  delay(5000);
   }
  }
@@ -119,11 +135,11 @@ void reconnect() {
 
 int checkDHT22(){
   if((newHum < lastHum - 0.5 || newHum > lastHum + 0.5) || (newTemp < lastTemp - 0.5 || newTemp > lastTemp + 0.5)){
-    Serial.println("DHT22 updt");
+    //Serial.println("DHT22 updt");
     return 1;
   }
   else{
-    Serial.println("DHT22 pas de updt");
+    //Serial.println("DHT22 pas de updt");
     return 0;
   } 
 }
@@ -148,14 +164,17 @@ void setup() {
 }
 
 void loop() {
-int etatReed = digitalRead(pinREED);
+//int etatReed = digitalRead(pinREED);
 //StaticJsonDocument<200> doc;
  if (!client.connected()) {
   reconnect();
  }
+
 if(!client.loop())
  client.connect(clientId.c_str(),"","095f3cdd2282");
- now = millis();
+ now = millis(); 
+ delay(100);
+
 /*/
   if(etatReed == LOW && lastCheck == 0 && etatReset == "Reset"){
     //cbon vois aimant donc fermer
@@ -173,16 +192,27 @@ if(!client.loop())
     lastCheck = 0 ;
   }
 /*/
-  if(CodeRecu == "pasOK"){
-    myservo.write(95); 
+
+  //Ajouter ouverture manuelle
+  if((CodeRecu == "pasOK") && (porteForce == 0)/*/&& lastEtatPorte == 0/*/){
+    myservo.write(95);
+    //client.publish("JSON_EtatPorte", "Porte fermée");
+    docEtatPorte["etatPorte"] = "Porte fermée";
+    serializeJson(docEtatPorte, json_EtatPorte);
+    client.publish("JSON_EtatPorte", json_EtatPorte);
+    lastEtatPorte = 1; 
   }
-  else if (CodeRecu == "OK"){
-    myservo.write(0); 
+  else if ((CodeRecu == "OK") || (porteForce == 1)){
+    myservo.write(0);
+    //client.publish("JSON_EtatPorte", "Porte ouverte");
+    docEtatPorte["etatPorte"] = "Porte ouverte";
+    serializeJson(docEtatPorte, json_EtatPorte);
+    client.publish("JSON_EtatPorte", json_EtatPorte);
+    lastEtatPorte = 0;
   }
-  delay(100);
 
 //Publishes new temperature and humidity every 3 seconds
- if (now - lastMeasure > 3000) {
+if (now - lastMeasure > 3000) {
  lastMeasure = now;
  
  float h = dht.readHumidity(); // Read humidity in %
@@ -198,7 +228,7 @@ if(!client.loop())
  return;
  }
 
-if (checkDHT22()){
+/*/if (checkDHT22()){/*/
 
 //Computes temperature values in Celsius
 //float hic = dht.computeHeatIndex(t, h, false);
@@ -221,8 +251,6 @@ if (checkDHT22()){
   //We could then access the data inside it using the same dot/bracket
   docDHT22["temperature"] = temperatureTemp;
   docDHT22["humidite"] = humidityTemp;
-  //char json_string[256];
-
   // Generate the minified JSON and send it to the Serial port.
   serializeJson(docDHT22, json_DHT22);
   Serial.println(json_DHT22);
@@ -230,6 +258,6 @@ if (checkDHT22()){
 
   // Generate the prettified JSON and send it to the Serial port.
   //serializeJsonPretty(doc, Serial);
-    }
+    /*/}/*/
   }
 }
