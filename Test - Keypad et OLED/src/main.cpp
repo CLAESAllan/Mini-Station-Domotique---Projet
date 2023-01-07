@@ -243,7 +243,6 @@ void setup() {
   // set the function callback to the client
   client.setCallback(callback);
   
-
   pinMode(LEDvert,OUTPUT);
   pinMode(LEDrouge,OUTPUT);
   pinMode(BUZZZER_PIN,OUTPUT);
@@ -273,7 +272,6 @@ void loop() {
   chiffre_valid = false;
   Blynk.virtualWrite(V1, key);
   //int tailleTableau = sizeof(codeIntroduit);
- 
   
 if (key == '#' ){ 
     check_validation = false;
