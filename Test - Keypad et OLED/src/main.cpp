@@ -7,7 +7,6 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <BlynkSimpleEsp32.h>
 
 /*/
 // Template ID, Device Name and Auth Token are provided by the Blynk.Cloud
@@ -159,7 +158,7 @@ void reconnect() {
  Serial.println(" try again in 5 seconds");
  // Wait 5 seconds before retrying
  delay(5000);
- }
+  }
  }
 }
 
@@ -258,7 +257,6 @@ void setup() {
 }
 
 void loop() {
-  //Blynk.run();
   if (!client.connected()) {
     reconnect();
 }
@@ -270,7 +268,6 @@ void loop() {
   
   char key = keypad.getKey();
   chiffre_valid = false;
-  Blynk.virtualWrite(V1, key);
   //int tailleTableau = sizeof(codeIntroduit);
   
 if (key == '#' ){ 
@@ -285,8 +282,6 @@ if (key == '#' ){
         display.setTextColor(WHITE);
         display.display();
         AffichageDHT22();
-            
-        
         //client.publish("codeBON","OK");
         doccodeBON["etatCode"] = "OK";
         serializeJson(doccodeBON, json_codeBON);
