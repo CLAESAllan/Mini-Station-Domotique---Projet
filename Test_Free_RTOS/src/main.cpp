@@ -24,12 +24,15 @@ String etatReset;
 
 int porteForce;
 int lastEtatPorte = 0;
+int lastCheck = 0;
 
 DynamicJsonDocument docDHT22(256);
 DynamicJsonDocument docEtatPorte(256);
+DynamicJsonDocument docREED(256);
 
 char json_DHT22 [256];
 char json_EtatPorte[256];
+char json_Reed[256];
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -103,48 +106,12 @@ void reconnect() {                                                // Fonction ef
   }
 }
 
-/*/
-void reed_task(void *pvParameter){
-    while(1){
-        if(digitalRead(REED_PIN) == LOW){
-            printf("Switch is open\n");
-        }
-        else{
-            printf("Switch is closed\n");
-        }
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-}
-/*/
-
-/*/
-void Servo_task(void *pvParameter){
-    while(true){
-        if((CodeRecu == "pasOK") && (porteForce == 0)&& lastEtatPorte == 0){
-              servo.write(95);
-              Serial.println("Flag pasOK");
-              docEtatPorte["etatPorte"] = "Porte fermée";
-              serializeJson(docEtatPorte, json_EtatPorte);
-              mqttClient.publish("JSON_EtatPorte", json_EtatPorte);
-              lastEtatPorte = 1; 
-        }
-        else if ((CodeRecu == "OK") || (porteForce == 1)){
-              servo.write(0);
-              docEtatPorte["etatPorte"] = "Porte ouverte";
-              serializeJson(docEtatPorte, json_EtatPorte);
-              mqttClient.publish("JSON_EtatPorte", json_EtatPorte);
-              lastEtatPorte = 0;
-        }
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
-}
-/*/
-
 void Task1code( void * parameter){
   Serial.print("Task1 is running on core ");                      // Affichage d'un message dans la console
   Serial.println(xPortGetCoreID());                               // Affichage du coeur en plein execution dans la console
   const TickType_t xDelayTask2 = 1 / portTICK_PERIOD_MS ;         // Création d'un délais de 1 ms permettant de candencer la vitesse de la boucle suivante 
-  for(;;){ 
+    
+    for(;;){ 
     vTaskDelay( xDelayTask2 );
 
     //COMMUNICATION
@@ -152,8 +119,30 @@ void Task1code( void * parameter){
       reconnect();                                                // On appelle la fonction qui demande une reconnexion
     }
     client.loop();
+    /*/
+    //Capteur Reed
+    int etatReed = digitalRead(REED_PIN);
+    if(etatReed == LOW && lastCheck == 0 && etatReset == "Reset"){
+      //cbon vois aimant donc fermer
+      Serial.println("Porte fermée");
+      client.publish("etatREED","La porte est sécurisé");
+      docREED["etatReed"] = etatReed;
+      serializeJson(docREED,json_Reed);
+      client.publish("JSON_REED", json_Reed);
+      lastCheck = 1;
+    }else if (etatReed == HIGH && lastCheck == 1 && CodeRecu == "pasOK" ){
+      Serial.println("Porte ouverte");
+      client.publish("etatREED","!!! INFRACTION !!!");
+      docREED["etatReed"] = etatReed;
+      serializeJson(docREED,json_Reed);
+      client.publish("JSON_REED", json_Reed);
+      etatReset = "pasReset";
+      lastCheck = 0 ;
     }
-    
+    /*/
+    //vTaskDelay(3000 / portTICK_PERIOD_MS);
+    }
+  vTaskDelete(Task1);
 }
 
 void Task_DHT22code( void* parameter){
@@ -161,7 +150,8 @@ void Task_DHT22code( void* parameter){
   Serial.println(xPortGetCoreID());                               // Affichage du coeur en plein execution dans la console
   const TickType_t xDelayTask1 = 500 / portTICK_PERIOD_MS ;       // Creation d'un délai de 500ms pour cadencer la boucle suivante
 
-  while (true) {
+  while (true){
+    //DHT22
     float t = dht.readTemperature();
     float h = dht.readHumidity();
     if (isnan(h) || isnan(t)) {
@@ -180,7 +170,8 @@ void Task_DHT22code( void* parameter){
     serializeJson(docDHT22, json_DHT22);
     client.publish("JSON_DHT22", json_DHT22);
     vTaskDelay(3000 / portTICK_PERIOD_MS);
-  }  
+    }
+  vTaskDelete(Task2);
 }
 
 void setup() {
@@ -197,7 +188,8 @@ void setup() {
   delay(500);
 
   xTaskCreatePinnedToCore(Task_DHT22code,"Task2",10000,NULL,1,&Task2,1); // création de la tache 2 sous le coeur 1
-  delay(500); 
+  delay(500);
+  vTaskStartScheduler(); 
 }
 
 void loop() {
