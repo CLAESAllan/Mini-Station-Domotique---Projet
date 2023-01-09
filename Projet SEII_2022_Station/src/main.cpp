@@ -26,18 +26,14 @@ float newTemp;
 float newHum;
 
 //  Définition des variables en string
-String CodeRecu;
 String etatReset;
+const char* CodeRecu;
+
 
 //
-DynamicJsonDocument docDHT22(256);
-DynamicJsonDocument docREED(256);
-DynamicJsonDocument docEtatPorte(256);
-
-//
-char json_DHT22[256];
-char json_Reed[256];
-char json_EtatPorte[256];
+char json_DHT22[1024];
+char json_Reed[1024];
+char json_EtatPorte[1024];
 
 //  Permet de se connecter au point d'accès
 const char* ssid = "Ordi de Gilles";  //  SSID du réseau Wi-Fi auquel nous devons nous connecter
@@ -95,7 +91,8 @@ void callback(String topic, byte* message, unsigned int length) {
   }
   Serial.println();
   if(topic == "JSON_EtatCode"){ //  Nous vérifions si c'est le bon topic.
-    CodeRecu = messageTemp;
+    String messageTemp;
+    char CodeRecu = messageTemp.charAt(0);
   }
   if(topic == "JSON_resetInfractionOUT"){ //  Nous vérifions si c'est le bon topic.
     etatReset = messageTemp;
@@ -132,6 +129,8 @@ void reconnect() {
 
 int checkDHT22(){
   if((newHum < lastHum - 0.5 || newHum > lastHum + 0.5) || (newTemp < lastTemp - 0.5 || newTemp > lastTemp + 0.5)){
+    lastHum = newHum;
+    lastTemp = newTemp;
     return 1;
   }
   else{
@@ -159,6 +158,10 @@ void setup() {
 }
 
 void loop() {
+  StaticJsonDocument<256> docDHT22;
+  StaticJsonDocument<256> docREED;
+  StaticJsonDocument<256> docEtatPorte;
+  
   int etatReed = digitalRead(pinREED);
   if (!client.connected()) {
     reconnect();
@@ -207,6 +210,7 @@ void loop() {
  
   float h = dht.readHumidity(); //Lis l'humidité en %.
   float t = dht.readTemperature(); //Lis la température en Celsius.
+
   newHum = h;
   newTemp = t;
   //static char tCHAR[3];
@@ -229,6 +233,7 @@ void loop() {
     //We could then access the data inside it using the same dot/bracket
     docDHT22["temperature"] = temperatureTemp;
     docDHT22["humidite"] = humidityTemp;
+    Serial.println(humidityTemp);
     // Génére le JSON minifié et l'envoie au port série.
     serializeJson(docDHT22, json_DHT22);
     client.publish("JSON_DHT22",json_DHT22);
