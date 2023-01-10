@@ -17,6 +17,7 @@
 int pinREED = 19;
 int lastCheck = 0;
 int lastEtatPorte = 0;
+int lastEtatForce = 0;
 int porteForce;
 
 //  Définition des variables en float
@@ -26,8 +27,8 @@ float newTemp;
 float newHum;
 
 //  Définition des variables en string
-String etatReset;
-const char* CodeRecu;
+int etatReset;
+int CodeRecu;
 
 
 //
@@ -91,15 +92,13 @@ void callback(String topic, byte* message, unsigned int length) {
   }
   Serial.println();
   if(topic == "JSON_EtatCode"){ //  Nous vérifions si c'est le bon topic.
-    String messageTemp;
-    char CodeRecu = messageTemp.charAt(0);
+    CodeRecu = messageTemp.toInt();
   }
   if(topic == "JSON_resetInfractionOUT"){ //  Nous vérifions si c'est le bon topic.
-    etatReset = messageTemp;
+    etatReset = messageTemp.toInt();
   }
   if (topic == "BpManuelPorte"){  //  Nous vérifions si c'est le bon topic.
     porteForce = messageTemp.toInt();
-    Serial.println(porteForce);
   }
 }
 
@@ -114,7 +113,7 @@ void reconnect() {
     if (client.connect(clientId.c_str(),"","095f3cdd2282")) {
       Serial.println("connected");
       client.subscribe("etatREED");
-      client.subscribe("JSON_resetInfraction");
+      client.subscribe("JSON_resetInfractionOUT");
       client.subscribe("JSON_EtatCode");
       client.subscribe("BpManuelPorte");
     } else {  // Si la connexion rate
@@ -171,39 +170,55 @@ void loop() {
     client.connect(clientId.c_str(),"","095f3cdd2282");
     now = millis(); 
     delay(100);
-
-  if(etatReed == LOW && lastCheck == 0 && etatReset == "Reset"){
-    //cbon vois aimant donc fermer
+  
+  if(etatReed == LOW && lastCheck == 0 && etatReset == 0){
     client.publish("etatREED","La porte est sécurisé");
-    docREED["etatReed"] = etatReed;
+    docREED["etatReed"] = 1;
     serializeJson(docREED,json_Reed);
     client.publish("JSON_REED", json_Reed);
     lastCheck = 1;
-  }else if (etatReed == HIGH && CodeRecu == "pasOK" && lastCheck == 1){
+  }else if (etatReed == HIGH && CodeRecu == 0 && lastCheck == 1){
+    etatReset = 1;
     client.publish("etatREED","!!! INFRACTION !!!");
-    docREED["etatReed"] = etatReed;
+    docREED["etatReed"] = 0;
     serializeJson(docREED,json_Reed);
     client.publish("JSON_REED", json_Reed);
-    etatReset = "pasReset";
     lastCheck = 0 ;
   }
 
-  //Ajouter ouverture manuelle
-  if((CodeRecu == "pasOK") || (porteForce == 0)/*/&& lastEtatPorte == 0/*/){
+  if(porteForce == 1){
+    if (lastEtatForce == 1){
+      goto BYPASSporteforce;
+    }
+    myservo.write(0);
+    docEtatPorte["etatPorte"] = "Porte ouverte";
+    serializeJson(docEtatPorte, json_EtatPorte);
+    client.publish("JSON_EtatPorte", json_EtatPorte);
+    lastEtatForce = 1;
+    lastEtatPorte = 0;
+    CodeRecu = 0;
+  }else{
+    //Ajouter ouverture manuelle
+    if((CodeRecu == 0 && lastEtatPorte == 0)/*/|| (porteForce == 0 && lastEtatPorte == 0)/*/){
     myservo.write(95);
     docEtatPorte["etatPorte"] = "Porte fermée";
     serializeJson(docEtatPorte, json_EtatPorte);
     client.publish("JSON_EtatPorte", json_EtatPorte);
     lastEtatPorte = 1; 
-  }
-  else if ((CodeRecu == "OK") || (porteForce == 1)){
+    lastEtatForce = 0;
+    }
+    else if ((CodeRecu == 1 && lastEtatPorte == 1)/*/ || (porteForce == 1 && lastEtatPorte == 1)/*/){
     myservo.write(0);
     docEtatPorte["etatPorte"] = "Porte ouverte";
     serializeJson(docEtatPorte, json_EtatPorte);
     client.publish("JSON_EtatPorte", json_EtatPorte);
     lastEtatPorte = 0;
-  }
+    lastEtatForce = 0;
+    }
 
+  }
+  BYPASSporteforce:
+  
   //Publie les nouvelles température et humidité toutes les 3 secondes.
   if (now - lastMeasure > 3000) {
     lastMeasure = now;
@@ -237,7 +252,6 @@ void loop() {
     // Génére le JSON minifié et l'envoie au port série.
     serializeJson(docDHT22, json_DHT22);
     client.publish("JSON_DHT22",json_DHT22);
-    Serial.println(json_DHT22);
     }
   }
 }
