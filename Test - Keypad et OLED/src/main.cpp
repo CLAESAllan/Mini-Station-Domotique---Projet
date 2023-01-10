@@ -40,8 +40,7 @@ byte pin_column[COLUMN_NUM] = {16, 17, 5, 18};
 // Documents JSON
 char json_codeBON[256];
 char json_resetInfraction[256];
-DynamicJsonDocument doccodeBON(256);
-DynamicJsonDocument docresetInfraction(256);
+
 
 // Définition du tableau pour le clavier matriciel
 char keys[ROW_NUM][COLUMN_NUM] = {
@@ -70,6 +69,8 @@ int temperature;                                                              //
 int humidite;                                                                 // Variable de l'humidité
 int newDataTemp;                                                              // Nouvelle variable de la température
 int newDataHum;                                                               // Nouvelle variable de l'humidité
+char codeBONstr[33];
+char etatResetstr[33];
 
 void setup_wifi() {          // Fonction de connection au WiFi
   delay(10);
@@ -242,6 +243,8 @@ void setup() {              // Fonction principale
 }
 
 void loop() {               // Boucle principale   
+  StaticJsonDocument<256> doccodeBON;
+  StaticJsonDocument<256> docresetInfraction;
   if (!client.connected()) {
     reconnect();
     }
@@ -264,7 +267,8 @@ void loop() {               // Boucle principale
       display.setTextColor(WHITE);
       display.display();
       AffichageDHT22();
-      doccodeBON["etatCode"] = "OK";
+      itoa(1,codeBONstr,10);
+      doccodeBON["etatCode"] = codeBONstr;
       serializeJson(doccodeBON, json_codeBON);
       client.publish("JSON_codeBON", json_codeBON);
       Serial.println(json_codeBON);
@@ -284,15 +288,17 @@ void loop() {               // Boucle principale
       display.setTextSize(1);
       display.setCursor(21, 10);
       display.println("Code incorrect");
-      doccodeBON["etatCode"] = "pasOK";
+      itoa(0,codeBONstr,10);
+      doccodeBON["etatCode"] = codeBONstr;
       serializeJson(doccodeBON, json_codeBON);
       client.publish("JSON_codeBON", json_codeBON);
       display.display();
        }
    }
 
-  if (key == 'A' && compareArray(motDePasse,codeIntroduit,4) == 0 ){          
-    docresetInfraction["etatReset"] = "Reset" ;
+  if (key == 'A' && compareArray(motDePasse,codeIntroduit,4) == 0 ){       
+    itoa(0,etatResetstr,10);   
+    docresetInfraction["etatReset"] = etatResetstr ;
     serializeJson(docresetInfraction, json_resetInfraction);
     client.publish("JSON_resetInfraction", json_resetInfraction);
    }
@@ -307,14 +313,16 @@ void loop() {               // Boucle principale
     codeROW = 40;
     digitalWrite(LEDrouge,LOW);
     digitalWrite(LEDvert,LOW);
-    
-    doccodeBON["etatCode"] = "pasOK";
+    itoa(0,codeBONstr,10);
+    doccodeBON["etatCode"] = codeBONstr;
     serializeJson(doccodeBON, json_codeBON);
     client.publish("JSON_codeBON", json_codeBON);
-
-    docresetInfraction["etatReset"] = "pasReset";
+     /*/
+    itoa(0,etatResetstr,10);
+    docresetInfraction["etatReset"] = etatResetstr;
     serializeJson(docresetInfraction, json_resetInfraction);
     client.publish("JSON_resetInfraction", json_resetInfraction);
+    /*/
     check_validation = true;
     }
 
