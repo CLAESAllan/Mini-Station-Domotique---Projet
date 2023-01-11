@@ -111,7 +111,7 @@ void callback(String topic, byte* message, unsigned int length) {         // Fon
  Serial.println();
 }
 
-void reconnect() {          // Fonction de reconnexion
+void reconnect() {                                           // Fonction de reconnexion
  // Boucle jusqu'à la reconnexion
  while (!client.connected()) {
  Serial.print("Attempting MQTT connection...");
@@ -119,11 +119,8 @@ void reconnect() {          // Fonction de reconnexion
  
  if (client.connect(clientId.c_str(),"","095f3cdd2282")){
   Serial.println("connected");
-  client.subscribe("codeBON");                   //
-  client.subscribe("ActionVerrou");              //
   client.subscribe("temperatureOUT");            // Topic de réception de la température
   client.subscribe("humiditeOUT");               // Topic de réception de l'humidité
-  client.subscribe("resetInfraction");           //
  } 
  else{
   Serial.print("failed, rc=");
