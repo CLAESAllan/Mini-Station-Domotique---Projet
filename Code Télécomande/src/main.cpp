@@ -236,10 +236,10 @@ void setup() {              // Fonction principale
   display.clearDisplay();
   display.setTextColor(WHITE);
   
-  AffichageBase();     // Appel de la fonction pour afficher l'affichage du menu principale
+  AffichageBase();                                                  // Appel de la fonction pour afficher l'affichage du menu principale
 }
 
-void loop() {               // Boucle principale   
+void loop() {                                                       // Boucle principale   
   StaticJsonDocument<256> doccodeBON;
   StaticJsonDocument<256> docresetInfraction;
   if (!client.connected()) {
@@ -314,12 +314,6 @@ void loop() {               // Boucle principale
     doccodeBON["etatCode"] = codeBONstr;
     serializeJson(doccodeBON, json_codeBON);
     client.publish("JSON_codeBON", json_codeBON);
-     /*/
-    itoa(0,etatResetstr,10);
-    docresetInfraction["etatReset"] = etatResetstr;
-    serializeJson(docresetInfraction, json_resetInfraction);
-    client.publish("JSON_resetInfraction", json_resetInfraction);
-    /*/
     check_validation = true;
     }
 
