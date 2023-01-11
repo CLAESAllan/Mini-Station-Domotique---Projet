@@ -216,7 +216,6 @@ void loop() {
       lastEtatPorte = 0;
       lastEtatForce = 0;
     }
-
   }
   BYPASSporteforce:
   
